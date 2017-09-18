@@ -4,27 +4,37 @@ import (
 	"fmt"
 
 	"github.com/aboutbrain/cs"
+    "github.com/golang-collections/go-datastructures/bitarray"
+
 )
 
 func main() {
 	point := &cs.Point{}
 
-	array := [8]byte{0,0,0,0,0,0,0,0}
-	fmt.Println(array)
+	hipotesa := bitarray.NewBitArray(32)
+	fmt.Println(hipotesa)
+	hipotesa.SetBit(0)
+	fmt.Printf("%d\n", hipotesa.ToNums()[0])
+	hipotesa.SetBit(3)
+	fmt.Printf("%d\n", hipotesa.ToNums()[1])
+	hipotesa.SetBit(63)
+	fmt.Printf("%d\n", hipotesa.ToNums()[2])
+	point.Memory = append(point.Memory, hipotesa)
 
-	point.Memory = append(point.Memory, array)
-	array = [8]byte{0,0,0,0,0,0,0,1}
-	point.Memory = append(point.Memory, array)
-	array = [8]byte{0,0,0,0,0,0,1,0}
-	point.Memory = append(point.Memory, array)
+	hipotesa2 := bitarray.NewBitArray(32)
+	fmt.Println(hipotesa)
+	hipotesa2.SetBit(1)
+	fmt.Printf("%d\n", hipotesa2.ToNums()[0])
+	hipotesa2.SetBit(2)
+	fmt.Printf("%d\n", hipotesa2.ToNums()[1])
+	point.Memory = append(point.Memory, hipotesa2)
 
-	/*point.InputArrayMap[1] = 1
-	point.InputArrayMap[2] = 100
-	conceptId := 1
-	contextId := 2
-
-		concept := cs.Concept{contextId}
-		context := cs.Context{conceptId}	/*point.Concept[conceptId] = concept
-		point.Context[contextId] = context*/
+	iter := hipotesa.Blocks()
+	iter.Next()
+	a1, block1 := iter.Value()
+	fmt.Println(a1, block1)
+	iter.Next()
+	a2, block2 := iter.Value()
+	fmt.Println(a2, block2)
 	fmt.Println(point)
 }

@@ -1,5 +1,5 @@
 package cs
 
-type Input struct {
+/*type Input struct {
 	Items [InputVectorSize]int
-}
+}*/

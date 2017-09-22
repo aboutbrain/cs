@@ -4,37 +4,47 @@ import (
 	"fmt"
 
 	"github.com/aboutbrain/cs"
-    "github.com/golang-collections/go-datastructures/bitarray"
+	"github.com/golang-collections/go-datastructures/bitarray"
 
+	"math/rand"
+	"time"
+)
+
+const (
+	InputVectorSize            = 8
+	OutputVectorSize           = 8
+	ContextSize                = 10
+	CombinatorialSpaceSize     = 10
+	BitsPerPoint               = 8
+	ClusterThreshold           = 6
+	ClusterActivationThreshold = 4
+	CharacterBits              = 8
+	PointMemoryCapacity        = 10
+	PointContextCapacity       = 10
 )
 
 func main() {
-	point := &cs.Point{}
+	rand.Seed(time.Now().Unix())
+	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, BitsPerPoint)
+	point := comSpace.Points[0]
 
-	hipotesa := bitarray.NewBitArray(32)
-	fmt.Println(hipotesa)
-	hipotesa.SetBit(0)
-	fmt.Printf("%d\n", hipotesa.ToNums()[0])
-	hipotesa.SetBit(3)
-	fmt.Printf("%d\n", hipotesa.ToNums()[1])
-	hipotesa.SetBit(63)
-	fmt.Printf("%d\n", hipotesa.ToNums()[2])
-	point.Memory = append(point.Memory, hipotesa)
+	sourceCode := bitarray.NewBitArray(InputVectorSize)
+	//fmt.Println(sourceCode)
+	sourceCode.SetBit(0)
+	sourceCode.SetBit(2)
+	sourceCode.SetBit(3)
+	sourceCode.SetBit(63)
 
-	hipotesa2 := bitarray.NewBitArray(32)
-	fmt.Println(hipotesa)
-	hipotesa2.SetBit(1)
-	fmt.Printf("%d\n", hipotesa2.ToNums()[0])
-	hipotesa2.SetBit(2)
-	fmt.Printf("%d\n", hipotesa2.ToNums()[1])
-	point.Memory = append(point.Memory, hipotesa2)
+	cluster := cs.NewCluster(sourceCode, point.GetReceptors())
+	point.SetMemory(cluster)
 
-	iter := hipotesa.Blocks()
-	iter.Next()
-	a1, block1 := iter.Value()
-	fmt.Println(a1, block1)
-	iter.Next()
-	a2, block2 := iter.Value()
-	fmt.Println(a2, block2)
+	sourceCode.Reset()
+	sourceCode.SetBit(1)
+	sourceCode.SetBit(3)
+	sourceCode.SetBit(5)
+	sourceCode.SetBit(6)
+	cluster2 := cs.NewCluster(sourceCode, point.GetReceptors())
+	point.SetMemory(cluster2)
+
 	fmt.Println(point)
 }

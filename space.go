@@ -4,7 +4,21 @@ type CombinatorialSpace struct {
 	LearningMode         int
 	InternalTime         int
 	NumberOfPoints       int
-	NumberOfBitInPoint   int
+	NumberOfBitInPoint   uint64
 	NumberOfBitInOutCode int
-	Points                [CombinatorialSpaceSize]Point
+	Points               []Point
+}
+
+func NewCombinatorialSpace(size int, bit uint64) *CombinatorialSpace {
+	space := &CombinatorialSpace{NumberOfPoints: size, NumberOfBitInPoint: bit}
+	space.createPoints()
+	return space
+}
+
+func (cs *CombinatorialSpace) createPoints() {
+	for i := 0; i < cs.NumberOfPoints; i++ {
+		point := NewPoint(cs.NumberOfBitInPoint)
+		//point.setReceptors()
+		cs.Points = append(cs.Points, *point)
+	}
 }

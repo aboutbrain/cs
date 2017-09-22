@@ -1,5 +1,5 @@
 package cs
 
-type Out struct {
+/*type Out struct {
 	Items [OutputVectorSize]bool
-}
+}*/

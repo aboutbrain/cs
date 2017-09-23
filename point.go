@@ -3,6 +3,7 @@ package cs
 import "github.com/golang-collections/go-datastructures/bitarray"
 
 type Point struct {
+	id           int
 	bitsPerPoint int
 	receptorSet  bitarray.BitArray
 	Memory       []Cluster
@@ -10,8 +11,9 @@ type Point struct {
 	OutBit       bool
 }
 
-func NewPoint(bitsPerPoint uint64) *Point {
+func NewPoint(id int, bitsPerPoint uint64) *Point {
 	p := &Point{
+		id: id,
 		bitsPerPoint: int(bitsPerPoint),
 		receptorSet:  bitarray.NewBitArray(bitsPerPoint),
 	}

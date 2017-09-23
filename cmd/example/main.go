@@ -35,16 +35,22 @@ func main() {
 	sourceCode.SetBit(3)
 	sourceCode.SetBit(63)
 
-	cluster := cs.NewCluster(sourceCode, point.GetReceptors())
-	point.SetMemory(cluster)
+	for i, p := range comSpace.Points  {
+		cluster := cs.NewCluster(sourceCode, p.GetReceptors())
+		p.SetMemory(cluster)
+		comSpace.Points[i] = p
+	}
 
-	sourceCode.Reset()
+
+	//point.SetMemory(cluster)
+
+	/*sourceCode.Reset()
 	sourceCode.SetBit(1)
 	sourceCode.SetBit(3)
 	sourceCode.SetBit(5)
 	sourceCode.SetBit(6)
 	cluster2 := cs.NewCluster(sourceCode, point.GetReceptors())
-	point.SetMemory(cluster2)
+	point.SetMemory(cluster2)*/
 
 	fmt.Println(point)
 }

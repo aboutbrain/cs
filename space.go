@@ -17,7 +17,7 @@ func NewCombinatorialSpace(size int, bit uint64) *CombinatorialSpace {
 
 func (cs *CombinatorialSpace) createPoints() {
 	for i := 0; i < cs.NumberOfPoints; i++ {
-		point := NewPoint(cs.NumberOfBitInPoint)
+		point := NewPoint(i, cs.NumberOfBitInPoint)
 		//point.setReceptors()
 		cs.Points = append(cs.Points, *point)
 	}

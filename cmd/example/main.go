@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	InputVectorSize            = 8
-	OutputVectorSize           = 8
+	InputVectorSize            = 256
+	OutputVectorSize           = 256
 	ContextSize                = 10
-	CombinatorialSpaceSize     = 10
+	CombinatorialSpaceSize     = 10000
 	BitsPerPoint               = 8
 	ClusterThreshold           = 6
 	ClusterActivationThreshold = 4
@@ -25,11 +25,10 @@ const (
 
 func main() {
 	rand.Seed(time.Now().Unix())
-	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, BitsPerPoint)
+	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, BitsPerPoint, OutputVectorSize)
 	point := comSpace.Points[0]
 
 	sourceCode := bitarray.NewBitArray(InputVectorSize)
-	//fmt.Println(sourceCode)
 	sourceCode.SetBit(0)
 	sourceCode.SetBit(2)
 	sourceCode.SetBit(3)
@@ -37,20 +36,13 @@ func main() {
 
 	for i, p := range comSpace.Points  {
 		cluster := cs.NewCluster(sourceCode, p.GetReceptors())
-		p.SetMemory(cluster)
-		comSpace.Points[i] = p
+		hash := cluster.GetHash()
+		if comSpace.CheckOutHashSet(p.OutBit, hash){
+			comSpace.SetHash(p.OutBit, hash)
+			p.SetMemory(cluster)
+			comSpace.Points[i] = p
+		}
 	}
-
-
-	//point.SetMemory(cluster)
-
-	/*sourceCode.Reset()
-	sourceCode.SetBit(1)
-	sourceCode.SetBit(3)
-	sourceCode.SetBit(5)
-	sourceCode.SetBit(6)
-	cluster2 := cs.NewCluster(sourceCode, point.GetReceptors())
-	point.SetMemory(cluster2)*/
 
 	fmt.Println(point)
 }

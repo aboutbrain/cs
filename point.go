@@ -8,7 +8,7 @@ type Point struct {
 	receptorSet  bitarray.BitArray
 	Memory       []Cluster
 	Potential    int
-	OutBit       bool
+	OutBit       int
 }
 
 func NewPoint(id int, bitsPerPoint uint64) *Point {

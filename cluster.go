@@ -1,6 +1,9 @@
 package cs
 
-import "github.com/golang-collections/go-datastructures/bitarray"
+import (
+	"github.com/golang-collections/go-datastructures/bitarray"
+	"strconv"
+)
 
 const (
 	ClusterTmp = iota
@@ -20,4 +23,13 @@ func NewCluster(input, point bitarray.BitArray) *Cluster {
 	}
 	c.bitSet = point.And(input)
 	return c
+}
+
+func (c *Cluster) GetHash() string {
+	nums := c.bitSet.ToNums()
+	hash := ""
+	for _, v := range nums {
+		hash += "." + strconv.Itoa(int(v))
+	}
+	return hash
 }

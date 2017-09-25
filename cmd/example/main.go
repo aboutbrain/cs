@@ -19,14 +19,11 @@ const (
 	ClusterThreshold           = 6
 	ClusterActivationThreshold = 4
 	CharacterBits              = 8
-	PointMemoryCapacity        = 10
-	PointContextCapacity       = 10
 )
 
 func main() {
 	rand.Seed(time.Now().Unix())
 	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, BitsPerPoint, OutputVectorSize)
-	point := comSpace.Points[0]
 
 	sourceCode := bitarray.NewBitArray(InputVectorSize)
 	sourceCode.SetBit(0)
@@ -46,7 +43,14 @@ func main() {
 	learningCode.SetBit(3)
 	learningCode.SetBit(63)
 
-	outBits := learningCode.ToNums()
+	mc := cs.NewMiniColumn(ClusterThreshold)
+	mc.SetCombinatorialSpace(comSpace)
+
+	mc.SetInputVector(sourceCode)
+	mc.SetLearningVector(learningCode)
+	mc.AddNewClusters()
+
+	/*outBits := learningCode.ToNums()
 	for _, v := range outBits {
 		points := comSpace.GetPointsByOutBitNumber(int(v))
 		for _, pointId := range points {
@@ -58,10 +62,9 @@ func main() {
 				comSpace.SetHash(p.OutBit, hash)
 				p.SetMemory(cluster)
 				comSpace.Points[pointId] = p
-
 			}
 		}
-	}
+	}*/
 
 	/*for i, p := range comSpace.Points  {
 		cluster := cs.NewCluster(sourceCode, p.GetReceptors())
@@ -73,5 +76,5 @@ func main() {
 		}
 	}
 	*/
-	fmt.Println(point)
+	fmt.Println(mc)
 }

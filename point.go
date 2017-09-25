@@ -1,19 +1,21 @@
 package cs
 
-import "github.com/golang-collections/go-datastructures/bitarray"
+import (
+	"github.com/golang-collections/go-datastructures/bitarray"
+)
 
 type Point struct {
 	id           int
 	bitsPerPoint int
 	receptorSet  bitarray.BitArray
 	Memory       []Cluster
-	Potential    int
+	potential    int
 	OutBit       int
 }
 
 func NewPoint(id int, bitsPerPoint uint64) *Point {
 	p := &Point{
-		id: id,
+		id:           id,
 		bitsPerPoint: int(bitsPerPoint),
 		receptorSet:  bitarray.NewBitArray(bitsPerPoint),
 	}
@@ -34,4 +36,12 @@ func (p *Point) setReceptors() {
 
 func (p *Point) GetReceptors() bitarray.BitArray {
 	return p.receptorSet
+}
+
+func (p *Point) SetPotential(i int) {
+	p.potential = i
+}
+
+func (p *Point) GetPotential() int{
+	return p.potential
 }

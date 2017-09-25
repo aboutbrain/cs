@@ -14,8 +14,11 @@ const (
 )
 
 type Cluster struct {
-	Status int
-	bitSet bitarray.BitArray
+	Status            int
+	bitSet            bitarray.BitArray
+	potential         int
+	ActivationCounter int
+	ErrorCounter      int
 }
 
 func NewCluster(input, point bitarray.BitArray) *Cluster {
@@ -24,6 +27,10 @@ func NewCluster(input, point bitarray.BitArray) *Cluster {
 	}
 	c.bitSet = point.And(input)
 	return c
+}
+
+func (c *Cluster) SetCurrentPotential(targetVector bitarray.BitArray) {
+	c.potential = i
 }
 
 func (c *Cluster) GetSize() int {

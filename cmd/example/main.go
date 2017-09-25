@@ -14,8 +14,8 @@ const (
 	InputVectorSize            = 256
 	OutputVectorSize           = 256
 	ContextSize                = 10
-	CombinatorialSpaceSize     = 10000
-	BitsPerPoint               = 8
+	CombinatorialSpaceSize     = 60000
+	BitsPerPoint               = 32
 	ClusterThreshold           = 6
 	ClusterActivationThreshold = 4
 	CharacterBits              = 8
@@ -32,9 +32,38 @@ func main() {
 	sourceCode.SetBit(0)
 	sourceCode.SetBit(2)
 	sourceCode.SetBit(3)
+	sourceCode.SetBit(5)
+	sourceCode.SetBit(15)
+	sourceCode.SetBit(21)
+	sourceCode.SetBit(25)
+	sourceCode.SetBit(35)
+	sourceCode.SetBit(45)
 	sourceCode.SetBit(63)
 
-	for i, p := range comSpace.Points  {
+	learningCode := bitarray.NewBitArray(OutputVectorSize)
+	learningCode.SetBit(0)
+	learningCode.SetBit(2)
+	learningCode.SetBit(3)
+	learningCode.SetBit(63)
+
+	outBits := learningCode.ToNums()
+	for _, v := range outBits {
+		points := comSpace.GetPointsByOutBitNumber(int(v))
+		for _, pointId := range points {
+			p := comSpace.Points[pointId]
+			cluster := cs.NewCluster(sourceCode, p.GetReceptors())
+			hash := cluster.GetHash()
+			size := cluster.GetSize()
+			if comSpace.CheckOutHashSet(p.OutBit, hash) && size >= ClusterThreshold {
+				comSpace.SetHash(p.OutBit, hash)
+				p.SetMemory(cluster)
+				comSpace.Points[pointId] = p
+
+			}
+		}
+	}
+
+	/*for i, p := range comSpace.Points  {
 		cluster := cs.NewCluster(sourceCode, p.GetReceptors())
 		hash := cluster.GetHash()
 		if comSpace.CheckOutHashSet(p.OutBit, hash){
@@ -43,6 +72,6 @@ func main() {
 			comSpace.Points[i] = p
 		}
 	}
-
+	*/
 	fmt.Println(point)
 }

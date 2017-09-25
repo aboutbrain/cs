@@ -1,8 +1,9 @@
 package cs
 
 import (
-	"github.com/golang-collections/go-datastructures/bitarray"
 	"strconv"
+
+	"github.com/golang-collections/go-datastructures/bitarray"
 )
 
 const (
@@ -23,6 +24,10 @@ func NewCluster(input, point bitarray.BitArray) *Cluster {
 	}
 	c.bitSet = point.And(input)
 	return c
+}
+
+func (c *Cluster) GetSize() int {
+	return len(c.bitSet.ToNums())
 }
 
 func (c *Cluster) GetHash() string {

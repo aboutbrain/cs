@@ -4,10 +4,14 @@ import (
 	"fmt"
 
 	"github.com/aboutbrain/cs"
-	"github.com/golang-collections/go-datastructures/bitarray"
 
 	"math/rand"
 	"time"
+
+	"encoding/json"
+
+	"github.com/aboutbrain/cs/persist"
+	"github.com/aboutbrain/cs/text"
 )
 
 const (
@@ -24,25 +28,35 @@ const (
 
 func main() {
 	rand.Seed(time.Now().Unix())
+
+	const alpha = " abcdefghijklmnopqrstuvwxyz"
+	charCodes := text.GetCharCodes(CharacterBits, alpha, InputVectorSize, 0, 127)
+	fmt.Printf("%+v", charCodes)
+	contextCodes := text.GetContextCodes(ContextSize, InputVectorSize, 128, 255)
+	fmt.Printf("%+v", contextCodes)
+
+	charContextCodes := text.GetCharContextCodes(charCodes, contextCodes)
+	fmt.Printf("%+v", charContextCodes)
+
+	capCode := charContextCodes[32][0].Capacity()
+	fmt.Println(capCode)
+
+	j, _ := json.Marshal(charCodes)
+	fmt.Printf("%+v", j)
+
+	path := "aaa.json"
+
+	persist.ToFile(path, &charContextCodes)
+
+	codes2 := persist.FromFile(path)
+
+	textFragment := text.GetTextFragment(0, 1)
+	sourceCode := text.GetTextFragmentCode(textFragment, *codes2)
+	fmt.Printf("%+v", sourceCode)
+
 	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, BitsPerPoint, OutputVectorSize)
 
-	sourceCode := bitarray.NewBitArray(InputVectorSize)
-	sourceCode.SetBit(0)
-	sourceCode.SetBit(2)
-	sourceCode.SetBit(3)
-	sourceCode.SetBit(5)
-	sourceCode.SetBit(15)
-	sourceCode.SetBit(21)
-	sourceCode.SetBit(25)
-	sourceCode.SetBit(35)
-	sourceCode.SetBit(45)
-	sourceCode.SetBit(63)
-
-	learningCode := bitarray.NewBitArray(OutputVectorSize)
-	learningCode.SetBit(0)
-	learningCode.SetBit(2)
-	learningCode.SetBit(3)
-	learningCode.SetBit(63)
+	learningCode := sourceCode
 
 	mc := cs.NewMiniColumn(ClusterThreshold, PointMemoryLimit)
 	mc.SetCombinatorialSpace(comSpace)
@@ -53,7 +67,7 @@ func main() {
 
 	/*mc.ActivateClusters()
 	mc.MakeOutVector()
-	mc.ModyfyClusters()
+	mc.ModifyClusters()
 	mc.ConsolidateMemory()*/
 
 	mc.AddNewClusters()

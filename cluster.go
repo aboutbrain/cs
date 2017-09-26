@@ -15,30 +15,32 @@ const (
 
 type Cluster struct {
 	Status            int
-	bitSet            bitarray.BitArray
+	inputBitSet       bitarray.BitArray
+	targetBitSet      bitarray.BitArray
 	potential         int
 	ActivationCounter int
 	ErrorCounter      int
 }
 
-func NewCluster(input, point bitarray.BitArray) *Cluster {
+func NewCluster(inputVector, inputReceptors, targetVector, targetOutputs bitarray.BitArray) *Cluster {
 	c := &Cluster{
 		Status: ClusterTmp,
 	}
-	c.bitSet = point.And(input)
+	c.inputBitSet = inputReceptors.And(inputVector)
+	c.targetBitSet = targetOutputs.And(targetVector)
 	return c
 }
 
 func (c *Cluster) SetCurrentPotential(targetVector bitarray.BitArray) {
-	c.potential = i
+	//c.potential = targetVector
 }
 
 func (c *Cluster) GetSize() int {
-	return len(c.bitSet.ToNums())
+	return len(c.inputBitSet.ToNums())
 }
 
 func (c *Cluster) GetHash() string {
-	nums := c.bitSet.ToNums()
+	nums := c.inputBitSet.ToNums()
 	hash := ""
 	for _, v := range nums {
 		hash += "." + strconv.Itoa(int(v))

@@ -43,7 +43,7 @@ func (mc *MiniColumn) Next() {
 func (mc *MiniColumn) ActivateClusters() {
 	for i, point := range mc.cs.Points {
 		for j, cluster := range point.Memory {
-			cluster.SetCurrentPotential(1)
+			//cluster.SetCurrentPotential(1)
 			point.Memory[j] = cluster
 		}
 		point.SetPotential(2)
@@ -68,12 +68,12 @@ func (mc *MiniColumn) AddNewClusters() {
 		points := mc.cs.GetPointsByOutBitNumber(int(v))
 		for _, pointId := range points {
 			p := mc.cs.Points[pointId]
-			cluster := NewCluster(mc.inputVector, p.GetReceptors())
-			hash := cluster.GetHash()
+			cluster := NewCluster(mc.inputVector, p.GetReceptors(), mc.learningVector, p.GetOutputs())
+			//hash := cluster.GetHash()
 			size := cluster.GetSize()
 			memorySize := len(p.Memory)
-			if mc.cs.CheckOutHashSet(p.OutBit, hash) && size >= mc.clusterThreshold && memorySize < mc.memoryLimit {
-				mc.cs.SetHash(p.OutBit, hash)
+			if /*mc.cs.CheckOutHashSet(p.OutBit, hash) &&*/ size >= mc.clusterThreshold && memorySize < mc.memoryLimit {
+				//mc.cs.SetHash(p.OutBit, hash)
 				p.SetMemory(cluster)
 				mc.cs.Points[pointId] = p
 			}

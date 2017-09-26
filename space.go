@@ -27,10 +27,10 @@ func NewCombinatorialSpace(size int, bit uint64, outCode int) *CombinatorialSpac
 
 func (cs *CombinatorialSpace) createPoints() {
 	for i := 0; i < cs.NumberOfPoints; i++ {
-		point := NewPoint(i, cs.NumberOfBitInPoint)
-		point.OutBit = random(0, cs.NumberOfBitInOutCode)
+		point := NewPoint(i, cs.NumberOfBitInPoint, cs.NumberOfBitInPoint)
+		//point.OutBit = Random(0, cs.NumberOfBitInOutCode)
 		cs.Points = append(cs.Points, *point)
-		cs.outBitToPointsMap[point.OutBit] = append(cs.outBitToPointsMap[point.OutBit], i)
+		//cs.outBitToPointsMap[point.OutBit] = append(cs.outBitToPointsMap[point.OutBit], i)
 	}
 }
 

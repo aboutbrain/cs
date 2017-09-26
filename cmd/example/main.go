@@ -1,16 +1,12 @@
 package main
 
 import (
-	"fmt"
-
-	"github.com/aboutbrain/cs"
-
 	"math/rand"
 	"time"
 
-	"encoding/json"
+	"fmt"
 
-	"github.com/aboutbrain/cs/persist"
+	"github.com/aboutbrain/cs"
 	"github.com/aboutbrain/cs/text"
 )
 
@@ -19,7 +15,8 @@ const (
 	OutputVectorSize           = 256
 	ContextSize                = 10
 	CombinatorialSpaceSize     = 60000
-	BitsPerPoint               = 32
+	ReceptorsPerPoint          = 32
+	OutputsPerPoint            = 10
 	ClusterThreshold           = 6
 	ClusterActivationThreshold = 4
 	CharacterBits              = 8
@@ -29,32 +26,23 @@ const (
 func main() {
 	rand.Seed(time.Now().Unix())
 
-	const alpha = " abcdefghijklmnopqrstuvwxyz"
-	charCodes := text.GetCharCodes(CharacterBits, alpha, InputVectorSize, 0, 127)
-	fmt.Printf("%+v", charCodes)
-	contextCodes := text.GetContextCodes(ContextSize, InputVectorSize, 128, 255)
-	fmt.Printf("%+v", contextCodes)
+	codes := text.GetCharContextMap(CharacterBits, text.Alpha, InputVectorSize, ContextSize)
+	//fmt.Printf("%+v\n", codes)
 
-	charContextCodes := text.GetCharContextCodes(charCodes, contextCodes)
-	fmt.Printf("%+v", charContextCodes)
+	//path := "aaa.json"
 
-	capCode := charContextCodes[32][0].Capacity()
-	fmt.Println(capCode)
+	//persist.ToFile(path, codes)
 
-	j, _ := json.Marshal(charCodes)
-	fmt.Printf("%+v", j)
+	/*codes2 := persist.FromFile(path)
+	fmt.Printf("%+v\n", codes2)*/
 
-	path := "aaa.json"
+	textFragment := text.GetTextFragment(0, 5)
+	sourceCode := text.GetTextFragmentCode(textFragment, codes.CharContext)
+	//fmt.Printf("%+v\n", sourceCode)
 
-	persist.ToFile(path, &charContextCodes)
+	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, ReceptorsPerPoint, OutputsPerPoint, OutputVectorSize)
 
-	codes2 := persist.FromFile(path)
-
-	textFragment := text.GetTextFragment(0, 1)
-	sourceCode := text.GetTextFragmentCode(textFragment, *codes2)
-	fmt.Printf("%+v", sourceCode)
-
-	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, BitsPerPoint, OutputVectorSize)
+	//fmt.Printf("%+v\n", textFragment)
 
 	learningCode := sourceCode
 
@@ -65,12 +53,10 @@ func main() {
 	mc.SetLearningVector(learningCode)
 	mc.Next()
 
-	/*mc.ActivateClusters()
-	mc.MakeOutVector()
-	mc.ModifyClusters()
-	mc.ConsolidateMemory()*/
-
 	mc.AddNewClusters()
 
-	fmt.Println(mc)
+	fmt.Println(comSpace.GetClustersCounter())
+
+	point := comSpace.Points[5]
+	fmt.Printf("%+v\n", point)
 }

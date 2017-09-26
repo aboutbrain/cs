@@ -3,20 +3,26 @@ package cs
 type HashMap map[string]bool
 
 type CombinatorialSpace struct {
-	LearningMode         int
-	InternalTime         int
-	NumberOfPoints       int
-	NumberOfBitInPoint   uint64
-	NumberOfBitInOutCode int
-	Points               []Point
-	OutHashSet           []HashMap
-	outBitToPointsMap    [][]int
-	clusters             int
+	LearningMode             int
+	InternalTime             int
+	NumberOfPoints           int
+	NumberOfReceptorsInPoint uint64
+	NumberOfOutputsInPoint   uint64
+	NumberOfBitInOutCode     int
+	Points                   []Point
+	OutHashSet               []HashMap
+	outBitToPointsMap        map[int][]int
+	clusters                 int
 }
 
-func NewCombinatorialSpace(size int, bit uint64, outCode int) *CombinatorialSpace {
-	space := &CombinatorialSpace{NumberOfPoints: size, NumberOfBitInPoint: bit, NumberOfBitInOutCode: outCode}
-	space.outBitToPointsMap = make([][]int, space.NumberOfBitInOutCode)
+func NewCombinatorialSpace(size int, receptors, outputs uint64, outCode int) *CombinatorialSpace {
+	space := &CombinatorialSpace{
+		NumberOfPoints:           size,
+		NumberOfReceptorsInPoint: receptors,
+		NumberOfOutputsInPoint:   outputs,
+		NumberOfBitInOutCode:     outCode,
+		}
+	space.outBitToPointsMap = make(map[int][]int)
 	space.createPoints()
 	space.OutHashSet = make([]HashMap, space.NumberOfBitInOutCode)
 	for i := 0; i < space.NumberOfBitInOutCode; i++ {
@@ -27,10 +33,14 @@ func NewCombinatorialSpace(size int, bit uint64, outCode int) *CombinatorialSpac
 
 func (cs *CombinatorialSpace) createPoints() {
 	for i := 0; i < cs.NumberOfPoints; i++ {
-		point := NewPoint(i, cs.NumberOfBitInPoint, cs.NumberOfBitInPoint)
-		//point.OutBit = Random(0, cs.NumberOfBitInOutCode)
+		point := NewPoint(i, cs.NumberOfBitInOutCode, cs.NumberOfBitInOutCode, cs.NumberOfReceptorsInPoint, cs.NumberOfOutputsInPoint)
 		cs.Points = append(cs.Points, *point)
-		//cs.outBitToPointsMap[point.OutBit] = append(cs.outBitToPointsMap[point.OutBit], i)
+		outBits := point.GetOutputs()
+		for _, v := range outBits.ToNums() {
+			arr := cs.outBitToPointsMap[int(v)]
+			arr = append(arr, i)
+			cs.outBitToPointsMap[int(v)] = arr
+		}
 	}
 }
 
@@ -49,4 +59,8 @@ func (cs *CombinatorialSpace) CheckOutHashSet(id int, hash string) bool {
 func (cs *CombinatorialSpace) SetHash(id int, hash string) {
 	cs.OutHashSet[id][hash] = true
 	cs.clusters++
+}
+
+func (cs *CombinatorialSpace) GetClustersCounter() int {
+	return cs.clusters
 }

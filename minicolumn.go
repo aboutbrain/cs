@@ -18,6 +18,7 @@ func NewMiniColumn(clusterThreshold, memoryLimit int) *MiniColumn {
 		clusterThreshold: clusterThreshold,
 		memoryLimit:      memoryLimit,
 		level:            2,
+		outputVector:     bitarray.NewBitArray(256),
 	}
 }
 
@@ -68,12 +69,21 @@ func (mc *MiniColumn) AddNewClusters() {
 		points := mc.cs.GetPointsByOutBitNumber(int(v))
 		for _, pointId := range points {
 			p := mc.cs.Points[pointId]
-			cluster := NewCluster(mc.inputVector, p.GetReceptors(), mc.learningVector, p.GetOutputs())
-			//hash := cluster.GetHash()
+			//input := mc.inputVector.ToNums()
+			//fmt.Printf("Input: %#v\n", input)
+			//learning := mc.inputVector.ToNums()
+			//fmt.Printf("Learning: %#v\n", learning)
+			receptors := p.GetReceptors()
+			//fmt.Printf("Receptors: %#v\n", receptors.ToNums())
+			outputs := p.GetOutputs()
+			//fmt.Printf("Outputs: %#v\n", outputs.ToNums())
+			cluster := NewCluster(mc.inputVector, receptors, mc.learningVector, outputs)
+			hash := cluster.GetHash()
+			//fmt.Println(hash)
 			size := cluster.GetSize()
 			memorySize := len(p.Memory)
-			if /*mc.cs.CheckOutHashSet(p.OutBit, hash) &&*/ size >= mc.clusterThreshold && memorySize < mc.memoryLimit {
-				//mc.cs.SetHash(p.OutBit, hash)
+			if mc.cs.CheckOutHashSet(int(v), hash) && size >= mc.clusterThreshold && memorySize < mc.memoryLimit {
+				mc.cs.SetHash(int(v), hash)
 				p.SetMemory(cluster)
 				mc.cs.Points[pointId] = p
 			}

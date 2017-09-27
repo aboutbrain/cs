@@ -24,8 +24,8 @@ func NewCombinatorialSpace(size int, receptors, outputs uint64, outCode int) *Co
 	}
 	space.outBitToPointsMap = make(map[int][]int)
 	space.createPoints()
-	space.OutHashSet = make([]HashMap, space.NumberOfBitInOutCode)
-	for i := 0; i < space.NumberOfBitInOutCode; i++ {
+	space.OutHashSet = make([]HashMap, space.NumberOfPoints)
+	for i := 0; i < space.NumberOfPoints; i++ {
 		space.OutHashSet[i] = make(HashMap)
 	}
 	return space

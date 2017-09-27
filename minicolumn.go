@@ -1,8 +1,12 @@
 package cs
 
 import (
+	"fmt"
+
 	"github.com/golang-collections/go-datastructures/bitarray"
 )
+
+var _ = fmt.Printf // For debugging; delete when done.
 
 type MiniColumn struct {
 	inputLen         int
@@ -21,7 +25,7 @@ func NewMiniColumn(clusterThreshold, memoryLimit int) *MiniColumn {
 	return &MiniColumn{
 		clusterThreshold: clusterThreshold,
 		memoryLimit:      memoryLimit,
-		level:            2,
+		level:            250,
 		outputVector:     bitarray.NewBitArray(256),
 	}
 }
@@ -49,11 +53,15 @@ func (mc *MiniColumn) Next() {
 
 func (mc *MiniColumn) ActivateClusters() {
 	for i, point := range mc.cs.Points {
+		maxPotential := 0
 		for j, cluster := range point.Memory {
-			//cluster.SetCurrentPotential(1)
+			potential := cluster.SetCurrentPotential(mc.inputVector, mc.learningVector)
 			point.Memory[j] = cluster
+			if potential > maxPotential {
+				maxPotential = potential
+			}
 		}
-		point.SetPotential(2)
+		point.SetPotential(maxPotential)
 		mc.cs.Points[i] = point
 	}
 }
@@ -68,6 +76,10 @@ func (mc *MiniColumn) MakeOutVector() {
 			mc.outputVector.SetBit(uint64(i))
 		}
 	}
+}
+
+func (mc *MiniColumn) OutVector() bitarray.BitArray {
+	return mc.outputVector
 }
 
 func (mc *MiniColumn) AddNewClusters() {
@@ -85,9 +97,13 @@ func (mc *MiniColumn) AddNewClusters() {
 
 		if receptorsActiveLen > mc.inputLen/3 && outputsActiveLen > mc.outputLen/3 && memorySize < mc.memoryLimit {
 			cluster := NewCluster(receptorsActiveCount, outputsActiveCount)
-			point.SetMemory(cluster)
-			mc.cs.Points[pointId] = point
-			mc.cs.IncreaseClusters()
+			hash := cluster.GetHash()
+			//fmt.Println(hash)
+			if mc.cs.CheckOutHashSet(pointId, hash) {
+				point.SetMemory(cluster)
+				mc.cs.Points[pointId] = point
+				mc.cs.SetHash(pointId, hash)
+			}
 		}
 	}
 	mc.epoch++

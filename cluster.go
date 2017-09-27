@@ -31,8 +31,11 @@ func NewCluster(inputBitSet, targetBitSet bitarray.BitArray) *Cluster {
 	return c
 }
 
-func (c *Cluster) SetCurrentPotential(targetVector bitarray.BitArray) {
-	//c.potential = targetVector
+func (c *Cluster) SetCurrentPotential(inputVector, targetVector bitarray.BitArray) int {
+	inputPotential := len(inputVector.And(c.inputBitSet).ToNums())
+	outputPotential := len(targetVector.And(c.targetBitSet).ToNums())
+	c.potential = inputPotential + outputPotential
+	return c.potential
 }
 
 func (c *Cluster) GetInputSize() int {
@@ -42,6 +45,11 @@ func (c *Cluster) GetInputSize() int {
 func (c *Cluster) GetHash() string {
 	nums := c.inputBitSet.ToNums()
 	hash := ""
+	for _, v := range nums {
+		hash += "." + strconv.Itoa(int(v))
+	}
+	hash += "-"
+	nums = c.targetBitSet.ToNums()
 	for _, v := range nums {
 		hash += "." + strconv.Itoa(int(v))
 	}

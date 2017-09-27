@@ -9,6 +9,7 @@ import (
 	"github.com/aboutbrain/cs"
 	"github.com/aboutbrain/cs/persist"
 	"github.com/aboutbrain/cs/text"
+	"github.com/golang-collections/go-datastructures/bitarray"
 )
 
 var _ = fmt.Printf // For debugging; delete when done.
@@ -41,6 +42,7 @@ func main() {
 
 	for i := 0; i < 100; i += 1 {
 		textFragment := text.GetTextFragment(i, 1)
+		//textFragment := "a"
 		fmt.Printf("TextFragment: \"%s\"\n", textFragment)
 		sourceCode := text.GetTextFragmentCode(textFragment, codes.CharContext)
 
@@ -53,8 +55,33 @@ func main() {
 		mc.AddNewClusters()
 
 		fmt.Printf("Clusters: %d\n", comSpace.GetClustersCounter())
+		fmt.Printf("InputVector:   %s\n", BitArrayToString(sourceCode))
+		fmt.Printf("OutputVector:  %s\n", BitArrayToString(mc.OutVector()))
+		fmt.Printf("LerningVector: %s\n", BitArrayToString(learningCode))
 	}
 
 	point := comSpace.Points[5]
 	fmt.Printf("%#v\n", point)
+}
+
+func BitArrayToString(ba bitarray.BitArray) string {
+	nums := ba.ToNums()
+	s := ""
+	for i := 0; i < 256; i++ {
+		if inArray(i, nums) {
+			s += "1"
+		}else {
+			s += "0"
+		}
+	}
+	return s
+}
+
+func inArray(num int, arr []uint64) bool {
+	for _, v := range arr {
+		if int(v) == num {
+			return true
+		}
+	}
+	return false
 }

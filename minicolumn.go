@@ -1,10 +1,14 @@
 package cs
 
-import "github.com/golang-collections/go-datastructures/bitarray"
+import (
+	"github.com/golang-collections/go-datastructures/bitarray"
+)
 
 type MiniColumn struct {
+	inputLen         int
 	inputVector      bitarray.BitArray
 	outputVector     bitarray.BitArray
+	outputLen        int
 	learningVector   bitarray.BitArray
 	cs               *CombinatorialSpace
 	clusterThreshold int
@@ -28,10 +32,12 @@ func (mc *MiniColumn) SetCombinatorialSpace(cs *CombinatorialSpace) {
 
 func (mc *MiniColumn) SetInputVector(inputVector bitarray.BitArray) {
 	mc.inputVector = inputVector
+	mc.inputLen = len(mc.inputVector.ToNums())
 }
 
 func (mc *MiniColumn) SetLearningVector(learningVector bitarray.BitArray) {
 	mc.learningVector = learningVector
+	mc.outputLen = len(mc.learningVector.ToNums())
 }
 
 func (mc *MiniColumn) Next() {
@@ -65,21 +71,23 @@ func (mc *MiniColumn) MakeOutVector() {
 }
 
 func (mc *MiniColumn) AddNewClusters() {
-	for _, v := range mc.learningVector.ToNums() {
-		points := mc.cs.GetPointsByOutBitNumber(int(v))
-		for _, pointId := range points {
-			p := mc.cs.Points[pointId]
-			receptors := p.GetReceptors()
-			outputs := p.GetOutputs()
-			cluster := NewCluster(mc.inputVector, receptors, mc.learningVector, outputs)
-			hash := cluster.GetHash()
-			size := cluster.GetSize()
-			memorySize := len(p.Memory)
-			if mc.cs.CheckOutHashSet(int(v), hash) && size >= mc.clusterThreshold && memorySize < mc.memoryLimit {
-				mc.cs.SetHash(int(v), hash)
-				p.SetMemory(cluster)
-				mc.cs.Points[pointId] = p
-			}
+	for pointId, point := range mc.cs.Points {
+
+		receptors := point.GetReceptors()
+		receptorsActiveCount := mc.inputVector.And(receptors)
+
+		outputs := point.GetOutputs()
+		outputsActiveCount := mc.learningVector.And(outputs)
+
+		receptorsActiveLen := len(receptorsActiveCount.ToNums())
+		outputsActiveLen := len(outputsActiveCount.ToNums())
+		memorySize := len(point.Memory)
+
+		if receptorsActiveLen > mc.inputLen/3 && outputsActiveLen > mc.outputLen/3 && memorySize < mc.memoryLimit {
+			cluster := NewCluster(receptorsActiveCount, outputsActiveCount)
+			point.SetMemory(cluster)
+			mc.cs.Points[pointId] = point
+			mc.cs.IncreaseClusters()
 		}
 	}
 	mc.epoch++

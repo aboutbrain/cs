@@ -22,12 +22,12 @@ type Cluster struct {
 	ErrorCounter      int
 }
 
-func NewCluster(inputVector, inputReceptors, targetVector, targetOutputs bitarray.BitArray) *Cluster {
+func NewCluster(inputBitSet, targetBitSet bitarray.BitArray) *Cluster {
 	c := &Cluster{
 		Status: ClusterTmp,
 	}
-	c.inputBitSet = inputReceptors.And(inputVector)
-	c.targetBitSet = targetOutputs.And(targetVector)
+	c.inputBitSet = inputBitSet
+	c.targetBitSet = targetBitSet
 	return c
 }
 
@@ -35,7 +35,7 @@ func (c *Cluster) SetCurrentPotential(targetVector bitarray.BitArray) {
 	//c.potential = targetVector
 }
 
-func (c *Cluster) GetSize() int {
+func (c *Cluster) GetInputSize() int {
 	return len(c.inputBitSet.ToNums())
 }
 

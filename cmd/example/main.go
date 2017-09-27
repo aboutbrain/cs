@@ -19,7 +19,7 @@ const (
 	ContextSize                = 10
 	CombinatorialSpaceSize     = 60000
 	ReceptorsPerPoint          = 32
-	OutputsPerPoint            = 10
+	OutputsPerPoint            = 32
 	ClusterThreshold           = 6
 	ClusterActivationThreshold = 4
 	CharacterBits              = 8
@@ -39,12 +39,12 @@ func main() {
 	mc := cs.NewMiniColumn(ClusterThreshold, PointMemoryLimit)
 	mc.SetCombinatorialSpace(comSpace)
 
-	for i := 0; i < 100; i += 5 {
-		textFragment := text.GetTextFragment(i, 10)
+	for i := 0; i < 100; i += 1 {
+		textFragment := text.GetTextFragment(i, 1)
 		fmt.Printf("TextFragment: \"%s\"\n", textFragment)
 		sourceCode := text.GetTextFragmentCode(textFragment, codes.CharContext)
 
-		learningCode := sourceCode
+		learningCode := codes.CharContext[int([]rune(textFragment)[0])][1]
 
 		mc.SetInputVector(sourceCode)
 		mc.SetLearningVector(learningCode)

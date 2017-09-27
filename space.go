@@ -21,7 +21,7 @@ func NewCombinatorialSpace(size int, receptors, outputs uint64, outCode int) *Co
 		NumberOfReceptorsInPoint: receptors,
 		NumberOfOutputsInPoint:   outputs,
 		NumberOfBitInOutCode:     outCode,
-		}
+	}
 	space.outBitToPointsMap = make(map[int][]int)
 	space.createPoints()
 	space.OutHashSet = make([]HashMap, space.NumberOfBitInOutCode)
@@ -58,6 +58,10 @@ func (cs *CombinatorialSpace) CheckOutHashSet(id int, hash string) bool {
 
 func (cs *CombinatorialSpace) SetHash(id int, hash string) {
 	cs.OutHashSet[id][hash] = true
+	cs.clusters++
+}
+
+func (cs *CombinatorialSpace) IncreaseClusters() {
 	cs.clusters++
 }
 

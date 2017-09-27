@@ -43,7 +43,6 @@ func (p *Point) setReceptors() {
 		bit := Random(0, p.inputVectorSize)
 		p.receptorSet.SetBit(uint64(bit))
 	}
-	//fmt.Printf("ReceptorSet: %d \n", p.receptorSet.ToNums())
 }
 
 func (p *Point) GetReceptors() bitarray.BitArray {

@@ -7,7 +7,7 @@ import (
 	"github.com/golang-collections/go-datastructures/bitarray"
 )
 
-const Alpha = " abcdefghijklmnopqrstuvwxyz"
+const Alpha = " abcdefghijklmnopqrstuvwxyz.\n"
 
 //const Alpha = " ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -43,14 +43,14 @@ func GetCharContextMap(bitPerChar int, alpha string, capacity int, contextSize i
 	return &charContextCode
 }
 
-func GetTextFragment(start, end int) string {
-	text := `I proffered him my passport and stood the suitcase on the
+func GetTextFragment(start, length int) string {
+	source := `I proffered him my passport and stood the suitcase on the
 white counter. The inspector rapidly leafed through it with his
-long careful fingers. He was dressed in a  white  uniform  with
-silver  buttons  and silver braid on the shoulders. He laid the
-passport aside and touched the suitcase with the  tips  of  his
+long careful fingers. He was dressed in a white  uniform  with
+silver  buttons and silver braid on the shoulders. He laid the
+passport aside and touched the suitcase with the tips of his
 fingers.`
-	return strings.ToLower(text[start:end])
+	return strings.ToLower(source[start : start+length])
 }
 
 func GetTextFragmentCode(txtFragment string, charContextCodes CharContext) bitarray.BitArray {

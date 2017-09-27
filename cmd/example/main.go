@@ -7,8 +7,11 @@ import (
 	"fmt"
 
 	"github.com/aboutbrain/cs"
+	"github.com/aboutbrain/cs/persist"
 	"github.com/aboutbrain/cs/text"
 )
+
+var _ = fmt.Printf // For debugging; delete when done.
 
 const (
 	InputVectorSize            = 256
@@ -26,37 +29,32 @@ const (
 func main() {
 	rand.Seed(time.Now().Unix())
 
-	codes := text.GetCharContextMap(CharacterBits, text.Alpha, InputVectorSize, ContextSize)
-	//fmt.Printf("%+v\n", codes)
+	charContextVectors := text.GetCharContextMap(CharacterBits, text.Alpha, InputVectorSize, ContextSize)
 
-	//path := "aaa.json"
-
-	//persist.ToFile(path, codes)
-
-	/*codes2 := persist.FromFile(path)
-	fmt.Printf("%+v\n", codes2)*/
-
-	textFragment := text.GetTextFragment(0, 5)
-	sourceCode := text.GetTextFragmentCode(textFragment, codes.CharContext)
-	//fmt.Printf("%+v\n", sourceCode)
+	path := "codes.json"
+	persist.ToFile(path, charContextVectors)
+	codes := persist.FromFile(path)
 
 	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, ReceptorsPerPoint, OutputsPerPoint, OutputVectorSize)
-
-	//fmt.Printf("%+v\n", textFragment)
-
-	learningCode := sourceCode
-
 	mc := cs.NewMiniColumn(ClusterThreshold, PointMemoryLimit)
 	mc.SetCombinatorialSpace(comSpace)
 
-	mc.SetInputVector(sourceCode)
-	mc.SetLearningVector(learningCode)
-	mc.Next()
+	for i := 0; i < 100; i += 5 {
+		textFragment := text.GetTextFragment(i, 10)
+		fmt.Printf("TextFragment: \"%s\"\n", textFragment)
+		sourceCode := text.GetTextFragmentCode(textFragment, codes.CharContext)
 
-	mc.AddNewClusters()
+		learningCode := sourceCode
 
-	fmt.Println(comSpace.GetClustersCounter())
+		mc.SetInputVector(sourceCode)
+		mc.SetLearningVector(learningCode)
+
+		mc.Next()
+		mc.AddNewClusters()
+
+		fmt.Printf("Clusters: %d\n", comSpace.GetClustersCounter())
+	}
 
 	point := comSpace.Points[5]
-	fmt.Printf("%+v\n", point)
+	fmt.Printf("%#v\n", point)
 }

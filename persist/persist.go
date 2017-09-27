@@ -21,7 +21,6 @@ func ToFile(path string, n *text.CharContextCodes) {
 
 func DumpToFile(path string, dump *CodesDump) {
 	j, _ := json.Marshal(dump)
-
 	err := ioutil.WriteFile(path, j, 0644)
 	if err != nil {
 		panic(err)
@@ -37,7 +36,6 @@ func ToDump(n *text.CharContextCodes) *CodesDump {
 			dump.CharCodes[i][j] = nums
 		}
 	}
-
 	return dump
 }
 
@@ -46,13 +44,11 @@ func DumpFromFile(path string) *CodesDump {
 	if err != nil {
 		panic(err)
 	}
-
 	dump := &CodesDump{}
 	err = json.Unmarshal(b, dump)
 	if err != nil {
 		panic(err)
 	}
-
 	return dump
 }
 
@@ -64,7 +60,6 @@ func FromFile(path string) *text.CharContextCodes {
 
 func FromDump(dump *CodesDump) *text.CharContextCodes {
 	codes := make(text.CharContext)
-
 	for i, v := range dump.CharCodes {
 		arr := make(map[int]bitarray.BitArray)
 		for j, v1 := range v {
@@ -76,7 +71,6 @@ func FromDump(dump *CodesDump) *text.CharContextCodes {
 		}
 		codes[i] = arr
 	}
-
 	charContextCode := text.CharContextCodes{VectorCapacity: int(dump.Capacity), CharContext: codes}
 	return &charContextCode
 }

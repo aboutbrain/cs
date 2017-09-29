@@ -39,11 +39,15 @@ func (p *Point) SetMemory(cluster *Cluster) {
 }
 
 func(p *Point) Cluster(clusterId int) *Cluster {
-	return &p.Memory[clusterId]
+	//if len(p.Memory) > 0 {
+		return &p.Memory[clusterId]
+	//}
+	//return nil
 }
 
-func (p *Point) DeleteCluster(clusterId int){
+func (p *Point) DeleteCluster(clusterId int) *Point{
 	p.Memory = append(p.Memory[:clusterId], p.Memory[clusterId+1:]...)
+	return p
 }
 
 func (p *Point) setReceptors() {

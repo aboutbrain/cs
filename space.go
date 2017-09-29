@@ -45,15 +45,15 @@ func (cs *CombinatorialSpace) createPoints() {
 	}
 }
 
-func (cs *CombinatorialSpace) DeleteCluster(pointId, clusterId int) {
-	point := cs.Points[pointId]
+func (cs *CombinatorialSpace) DeleteCluster(point *Point, clusterId int) {
 	cluster := point.Cluster(clusterId)
+	status := cluster.Status
 	point.DeleteCluster(clusterId)
 	cs.clustersTotal--
-	if cluster.Status == ClusterPermanent2 {
+	if status == ClusterPermanent2 {
 		cs.clustersPermanent--
 	}
-	delete(cs.OutHashSet[pointId], cluster.GetHash())
+	cs.RemoveHash(point.id, cluster.GetHash())
 }
 
 func (cs *CombinatorialSpace) GetPointsByOutBitNumber(id int) []int {
@@ -62,15 +62,16 @@ func (cs *CombinatorialSpace) GetPointsByOutBitNumber(id int) []int {
 
 func (cs *CombinatorialSpace) CheckOutHashSet(pointId int, hash string) bool {
 	hashMap := cs.OutHashSet[pointId]
-	if hashMap[hash] == true {
-		return false
-	}
-	return true
+	_, ok := hashMap[hash]
+	return ok
 }
 
-func (cs *CombinatorialSpace) SetHash(id int, hash string) {
-	cs.OutHashSet[id][hash] = true
-	cs.clustersTotal++
+func (cs *CombinatorialSpace) SetHash(pointId int, hash string) {
+	cs.OutHashSet[pointId][hash] = true
+}
+
+func (cs *CombinatorialSpace) RemoveHash(pointId int, hash string) {
+	delete(cs.OutHashSet[pointId], hash)
 }
 
 func (cs *CombinatorialSpace) IncreaseClusters() {

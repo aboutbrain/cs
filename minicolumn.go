@@ -7,7 +7,7 @@ import (
 	"github.com/golang-collections/go-datastructures/bitarray"
 )
 
-var _ = log.Printf
+var _ = log.Printf // For debugging; delete when done.
 var _ = fmt.Printf // For debugging; delete when done.
 
 type MiniColumn struct {
@@ -27,7 +27,7 @@ func NewMiniColumn(clusterThreshold, memoryLimit int) *MiniColumn {
 	return &MiniColumn{
 		clusterThreshold: clusterThreshold,
 		memoryLimit:      memoryLimit,
-		level:            80,
+		level:            4,
 		outputVector:     bitarray.NewBitArray(256),
 	}
 }
@@ -54,63 +54,77 @@ func (mc *MiniColumn) Next() {
 }
 
 func (mc *MiniColumn) ModifyClusters() {
+	clusters := 0
 	for pointId, point := range mc.cs.Points {
+		deleted := 0
 		for clusterId, cluster := range point.Memory {
-			//cluster.LearnCounter++
-			//log.Printf("learnCounter: %d, Test: %d", cluster.LearnCounter, cluster.startTime)
+			j := clusterId - deleted
+			clusters++
 			if cluster.Status != ClusterPermanent2 && (cluster.LearnCounter == 4 || cluster.LearnCounter == 16) {
 				f, clusterBits := cluster.BitActivationStatistic()
 				clusterBitsNew := []uint64{}
-				for k, bitNumber := range clusterBits {
-					if f[k] > 0.75 {
+				for i, bitNumber := range clusterBits {
+					if f[i] > 0.75 {
 						clusterBitsNew = append(clusterBitsNew, bitNumber)
 					}
 				}
 				clusterBitsNewLen := len(clusterBitsNew)
 				if len(clusterBits) != clusterBitsNewLen {
 					if clusterBitsNewLen > 3 {
-						hash := cluster.GetHash()
-						delete(mc.cs.OutHashSet[pointId], hash)
+						hashOld := cluster.GetHash()
 						cluster.SetNewBits(clusterBitsNew)
-						hash = cluster.GetHash()
-						mc.cs.SetHash(pointId, hash)
+						hashNew := cluster.GetHash()
+						if _, ok := mc.cs.OutHashSet[pointId][hashNew]; !ok {
+							mc.cs.RemoveHash(pointId, hashOld)
+							mc.cs.SetHash(pointId, hashNew)
+						} else {
+							mc.cs.DeleteCluster(&point, j)
+							deleted++
+							continue
+						}
 					} else {
-						mc.cs.DeleteCluster(pointId, clusterId)
+						mc.cs.DeleteCluster(&point, j)
+						deleted++
+						continue
 					}
-					mc.cs.DeleteCluster(pointId, clusterId)
 				}
 			}
-			point.Memory[clusterId] = cluster
+			point.Memory[j] = cluster
 		}
 		mc.cs.Points[pointId] = point
 	}
+	//fmt.Printf("\nClustersCount: %d\n", clusters)
 }
 
 func (mc *MiniColumn) ConsolidateMemory() {
 	for pointId, point := range mc.cs.Points {
+		deleted := 0
 		for clusterId, cluster := range point.Memory {
-			if mc.cs.InternalTime-cluster.startTime > 100 {
+			j := clusterId - deleted
+			clusterAge := mc.cs.InternalTime-cluster.startTime
+			if clusterAge > 20 {
 				if float32(cluster.ErrorFullCounter)/float32(cluster.ActivationFullCounter) > 0.05 {
-					mc.cs.DeleteCluster(pointId, clusterId)
+					mc.cs.DeleteCluster(&point, j)
+					deleted++
 					continue
 				}
 				if float32(cluster.ErrorPartialCounter)/float32(cluster.ActivationPartialCounter) > 0.3 {
-					mc.cs.DeleteCluster(pointId, clusterId)
+					mc.cs.DeleteCluster(&point, j)
+					deleted++
 					continue
 				}
 			}
 			switch {
-			case cluster.Status == ClusterTmp && cluster.ActivationState == ClusterStatusFull:
+			/*case cluster.Status == ClusterTmp && cluster.ActivationState == ClusterStatusFull:
 				cluster.Status = ClusterPermanent2
-				mc.cs.clustersPermanent++
+				mc.cs.clustersPermanent++*/
 			case cluster.Status == ClusterTmp && cluster.LearnCounter > 6:
 				cluster.Status = ClusterPermanent1
 			case cluster.Status == ClusterPermanent1 && cluster.LearnCounter > 16:
 				cluster.Status = ClusterPermanent2
 				mc.cs.clustersPermanent++
 			}
-			//log.Printf("---learnCounter: %d, Test: %d", cluster.LearnCounter, cluster.startTime)
-			point.Memory[clusterId] = cluster
+			point.Memory[j] = cluster
 		}
 		mc.cs.Points[pointId] = point
 	}
@@ -139,9 +153,8 @@ func (mc *MiniColumn) ActivateClusters() {
 					cluster.ErrorPartialCounter++
 				} else {
 					cluster.SetHistory(inputBits, outBits)
-					//cluster.LearnCounter++
 				}
-				mc.cs.Points[pointId].Memory[clusterId].LearnCounter++
+				cluster.LearnCounterIncrease()
 			}
 			point.Memory[clusterId] = cluster
 		}
@@ -179,14 +192,16 @@ func (mc *MiniColumn) AddNewClusters() {
 		outputsActiveLen := len(outputsActiveCount.ToNums())
 		memorySize := len(point.Memory)
 
-		if receptorsActiveLen >= mc.inputLen/2 && outputsActiveLen >= mc.outputLen/4 && memorySize < mc.memoryLimit {
+		if receptorsActiveLen >= 2 && outputsActiveLen >= 2 && memorySize < mc.memoryLimit {
 			cluster := NewCluster(receptorsActiveCount, outputsActiveCount)
 			cluster.startTime = mc.cs.InternalTime
 			hash := cluster.GetHash()
-			if mc.cs.CheckOutHashSet(pointId, hash) {
+			if !mc.cs.CheckOutHashSet(pointId, hash) {
 				point.SetMemory(cluster)
 				mc.cs.Points[pointId] = point
 				mc.cs.SetHash(pointId, hash)
+				//mc.cs.IncreaseClusters()
+				mc.cs.clustersTotal++
 			}
 		}
 	}

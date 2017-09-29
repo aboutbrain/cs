@@ -39,19 +39,37 @@ func main() {
 	mc := cs.NewMiniColumn(ClusterThreshold, PointMemoryLimit)
 	mc.SetCombinatorialSpace(comSpace)
 
-	for i := 0; i < 1000; i += 1 {
+	day := true
+	j := 0
+
+	for i := 0; i < 10000; i += 1 {
 		textFragment := text.GetTextFragment(i, 1)
 		//textFragment := "a"
-		fmt.Printf("i: %d, TextFragment: \"%s\"", i, textFragment)
+		fmt.Printf("i: %d, InputText : \"%s\"\n", i, textFragment)
 		sourceCode := text.GetTextFragmentCode(textFragment, codes.CharContext)
 
 		learningCode := codes.CharContext[int([]rune(textFragment)[0])][1]
-
+		/*learningText := ""
+		if i > 1 {
+			learningText = text.GetTextFragment(i-1, 1)
+		}
+		fmt.Printf("i: %d, OutputText: \"%s\"\n", i, learningText)
+		learningCode := text.GetTextFragmentCode(learningText, codes.CharContext)
+		*/
 		mc.SetInputVector(sourceCode)
 		mc.SetLearningVector(learningCode)
 
 		mc.Next()
-		mc.AddNewClusters()
+		if day == true {
+			mc.AddNewClusters()
+			fmt.Println("День")
+		} else {
+			fmt.Println("Ночь")
+		}
+		if j == 100 {
+			j = 0
+			day = !day
+		}
 
 		total, permanent := comSpace.ClustersCounters()
 		fmt.Printf("Clusters: %d, Permanent: %d\n", total, permanent)
@@ -60,35 +78,14 @@ func main() {
 		fmt.Printf("LerningVector: %s\n", cs.BitArrayToString(learningCode))
 		nVector := learningCode.Equals(mc.OutVector())
 		if !nVector {
-			fmt.Println("\033[31mFAIL!!\033[0m")
+			fmt.Println("\033[31mFAIL!!\033[0m\n")
 		} else {
-			fmt.Println("\033[32mPASS!!\033[0m")
+			fmt.Println("\033[32mPASS!!\033[0m\n")
 		}
 		comSpace.InternalTime++
+		j++
 	}
 
 	point := comSpace.Points[5]
 	fmt.Printf("%#v\n", point)
 }
-
-//func BitArrayToString(ba bitarray.BitArray) string {
-//	nums := ba.ToNums()
-//	s := ""
-//	for i := 0; i < 256; i++ {
-//		if inArray(i, nums) {
-//			s += "1"
-//		} else {
-//			s += "0"
-//		}
-//	}
-//	return s
-//}
-//
-//func inArray(num int, arr []uint64) bool {
-//	for _, v := range arr {
-//		if int(v) == num {
-//			return true
-//		}
-//	}
-//	return false
-//}

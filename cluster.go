@@ -67,6 +67,10 @@ func (c *Cluster) SetStatus(status int) {
 	c.Status = status
 }
 
+func (c *Cluster) LearnCounterIncrease() {
+	c.LearnCounter++
+}
+
 func (c *Cluster) SetActivationStatus(status int) {
 	c.ActivationState = status
 }
@@ -99,7 +103,8 @@ func (c *Cluster) SetNewBits(nums []uint64) {
 
 func (c *Cluster) BitActivationStatistic() ([]float32, []uint64) {
 	var max float32 = 0
-	var a int = 0
+	//var a int = 0
+	var a float32 = 0
 
 	activeBits := c.inputBitSet.ToNums()
 	clusterLength := len(activeBits)
@@ -116,7 +121,8 @@ func (c *Cluster) BitActivationStatistic() ([]float32, []uint64) {
 
 			for l, n := range activeBits {
 				if inArray(int(n), v.InputBits) {
-					a += int(f[l])
+					//a += int(f[l])
+					a += f[l]
 				}
 			}
 

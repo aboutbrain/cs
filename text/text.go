@@ -5,7 +5,6 @@ import (
 
 	"github.com/aboutbrain/cs"
 	"github.com/golang-collections/go-datastructures/bitarray"
-	"fmt"
 )
 
 const Alpha = " abcdefghijklmnopqrstuvwxyz.,*“”’?!-:\n"
@@ -47,10 +46,10 @@ func GetCharContextMap(bitPerChar int, alpha string, capacity int, contextSize i
 func GetTextFragmentCode(txtFragment string, charContextCodes CharContext) bitarray.BitArray {
 	code := bitarray.NewBitArray(256)
 	for i, char := range txtFragment {
-		fmt.Printf(", CharCode: %d\n", char)
+		//fmt.Printf(", CharCode: %d", char)
 		codeCurrent := charContextCodes[int(char)][i]
 		if codeCurrent == nil {
-			fmt.Errorf("CharCode: %d", char)
+			//fmt.Errorf("CharCode: %d", char)
 		}
 		code = code.Or(codeCurrent)
 	}

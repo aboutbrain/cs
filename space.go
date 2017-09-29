@@ -53,6 +53,7 @@ func (cs *CombinatorialSpace) DeleteCluster(pointId, clusterId int) {
 	if cluster.Status == ClusterPermanent2 {
 		cs.clustersPermanent--
 	}
+	delete(cs.OutHashSet[pointId], cluster.GetHash())
 }
 
 func (cs *CombinatorialSpace) GetPointsByOutBitNumber(id int) []int {

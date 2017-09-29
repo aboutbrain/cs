@@ -40,9 +40,9 @@ func main() {
 	mc.SetCombinatorialSpace(comSpace)
 
 	for i := 0; i < 1000; i += 1 {
-		textFragment := text.GetTextFragment(i, 5)
+		textFragment := text.GetTextFragment(i, 1)
 		//textFragment := "a"
-		fmt.Printf("TextFragment: \"%s\"\n", textFragment)
+		fmt.Printf("i: %d, TextFragment: \"%s\"", i, textFragment)
 		sourceCode := text.GetTextFragmentCode(textFragment, codes.CharContext)
 
 		learningCode := codes.CharContext[int([]rune(textFragment)[0])][1]

@@ -12,7 +12,8 @@ type CombinatorialSpace struct {
 	Points                   []Point
 	OutHashSet               []HashMap
 	outBitToPointsMap        map[int][]int
-	clusters                 int
+	clustersTotal            int
+	clustersPermanent        int
 }
 
 func NewCombinatorialSpace(size int, receptors, outputs uint64, outCode int) *CombinatorialSpace {
@@ -44,12 +45,22 @@ func (cs *CombinatorialSpace) createPoints() {
 	}
 }
 
+func (cs *CombinatorialSpace) DeleteCluster(pointId, clusterId int) {
+	point := cs.Points[pointId]
+	cluster := point.Cluster(clusterId)
+	point.DeleteCluster(clusterId)
+	cs.clustersTotal--
+	if cluster.Status == ClusterPermanent2 {
+		cs.clustersPermanent--
+	}
+}
+
 func (cs *CombinatorialSpace) GetPointsByOutBitNumber(id int) []int {
 	return cs.outBitToPointsMap[id]
 }
 
-func (cs *CombinatorialSpace) CheckOutHashSet(id int, hash string) bool {
-	hashMap := cs.OutHashSet[id]
+func (cs *CombinatorialSpace) CheckOutHashSet(pointId int, hash string) bool {
+	hashMap := cs.OutHashSet[pointId]
 	if hashMap[hash] == true {
 		return false
 	}
@@ -58,13 +69,13 @@ func (cs *CombinatorialSpace) CheckOutHashSet(id int, hash string) bool {
 
 func (cs *CombinatorialSpace) SetHash(id int, hash string) {
 	cs.OutHashSet[id][hash] = true
-	cs.clusters++
+	cs.clustersTotal++
 }
 
 func (cs *CombinatorialSpace) IncreaseClusters() {
-	cs.clusters++
+	cs.clustersTotal++
 }
 
-func (cs *CombinatorialSpace) GetClustersCounter() int {
-	return cs.clusters
+func (cs *CombinatorialSpace) ClustersCounters() (int, int) {
+	return cs.clustersTotal, cs.clustersPermanent
 }

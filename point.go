@@ -38,6 +38,14 @@ func (p *Point) SetMemory(cluster *Cluster) {
 	p.Memory = append(p.Memory, *cluster)
 }
 
+func(p *Point) Cluster(clusterId int) *Cluster {
+	return &p.Memory[clusterId]
+}
+
+func (p *Point) DeleteCluster(clusterId int){
+	p.Memory = append(p.Memory[:clusterId], p.Memory[clusterId+1:]...)
+}
+
 func (p *Point) setReceptors() {
 	for i := 0; i < p.bitsPerInput; i++ {
 		bit := Random(0, p.inputVectorSize)

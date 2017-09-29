@@ -9,7 +9,6 @@ import (
 	"github.com/aboutbrain/cs"
 	"github.com/aboutbrain/cs/persist"
 	"github.com/aboutbrain/cs/text"
-	"github.com/golang-collections/go-datastructures/bitarray"
 )
 
 var _ = fmt.Printf // For debugging; delete when done.
@@ -40,8 +39,8 @@ func main() {
 	mc := cs.NewMiniColumn(ClusterThreshold, PointMemoryLimit)
 	mc.SetCombinatorialSpace(comSpace)
 
-	for i := 0; i < 100; i += 1 {
-		textFragment := text.GetTextFragment(i, 1)
+	for i := 0; i < 1000; i += 1 {
+		textFragment := text.GetTextFragment(i, 5)
 		//textFragment := "a"
 		fmt.Printf("TextFragment: \"%s\"\n", textFragment)
 		sourceCode := text.GetTextFragmentCode(textFragment, codes.CharContext)
@@ -54,40 +53,42 @@ func main() {
 		mc.Next()
 		mc.AddNewClusters()
 
-		fmt.Printf("Clusters: %d\n", comSpace.GetClustersCounter())
-		fmt.Printf("InputVector:   %s\n", BitArrayToString(sourceCode))
-		fmt.Printf("OutputVector:  %s\n", BitArrayToString(mc.OutVector()))
-		fmt.Printf("LerningVector: %s\n", BitArrayToString(learningCode))
+		total, permanent := comSpace.ClustersCounters()
+		fmt.Printf("Clusters: %d, Permanent: %d\n", total, permanent)
+		fmt.Printf("InputVector:   %s\n", cs.BitArrayToString(sourceCode))
+		fmt.Printf("OutputVector:  %s\n", cs.BitArrayToString(mc.OutVector()))
+		fmt.Printf("LerningVector: %s\n", cs.BitArrayToString(learningCode))
 		nVector := learningCode.Equals(mc.OutVector())
 		if !nVector {
 			fmt.Println("\033[31mFAIL!!\033[0m")
 		} else {
 			fmt.Println("\033[32mPASS!!\033[0m")
 		}
+		comSpace.InternalTime++
 	}
 
 	point := comSpace.Points[5]
 	fmt.Printf("%#v\n", point)
 }
 
-func BitArrayToString(ba bitarray.BitArray) string {
-	nums := ba.ToNums()
-	s := ""
-	for i := 0; i < 256; i++ {
-		if inArray(i, nums) {
-			s += "1"
-		} else {
-			s += "0"
-		}
-	}
-	return s
-}
-
-func inArray(num int, arr []uint64) bool {
-	for _, v := range arr {
-		if int(v) == num {
-			return true
-		}
-	}
-	return false
-}
+//func BitArrayToString(ba bitarray.BitArray) string {
+//	nums := ba.ToNums()
+//	s := ""
+//	for i := 0; i < 256; i++ {
+//		if inArray(i, nums) {
+//			s += "1"
+//		} else {
+//			s += "0"
+//		}
+//	}
+//	return s
+//}
+//
+//func inArray(num int, arr []uint64) bool {
+//	for _, v := range arr {
+//		if int(v) == num {
+//			return true
+//		}
+//	}
+//	return false
+//}

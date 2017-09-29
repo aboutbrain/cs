@@ -30,10 +30,10 @@ const (
 func main() {
 	rand.Seed(time.Now().Unix())
 
-	charContextVectors := text.GetCharContextMap(CharacterBits, text.Alpha, InputVectorSize, ContextSize)
+	//charContextVectors := text.GetCharContextMap(CharacterBits, text.Alpha, InputVectorSize, ContextSize)
 
 	path := "codes.json"
-	persist.ToFile(path, charContextVectors)
+	//persist.ToFile(path, charContextVectors)
 	codes := persist.FromFile(path)
 
 	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, ReceptorsPerPoint, OutputsPerPoint, OutputVectorSize)
@@ -58,6 +58,12 @@ func main() {
 		fmt.Printf("InputVector:   %s\n", BitArrayToString(sourceCode))
 		fmt.Printf("OutputVector:  %s\n", BitArrayToString(mc.OutVector()))
 		fmt.Printf("LerningVector: %s\n", BitArrayToString(learningCode))
+		nVector := learningCode.Equals(mc.OutVector())
+		if !nVector {
+			fmt.Println("\033[31mFAIL!!\033[0m")
+		} else {
+			fmt.Println("\033[32mPASS!!\033[0m")
+		}
 	}
 
 	point := comSpace.Points[5]
@@ -70,7 +76,7 @@ func BitArrayToString(ba bitarray.BitArray) string {
 	for i := 0; i < 256; i++ {
 		if inArray(i, nums) {
 			s += "1"
-		}else {
+		} else {
 			s += "0"
 		}
 	}

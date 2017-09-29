@@ -25,7 +25,7 @@ func NewMiniColumn(clusterThreshold, memoryLimit int) *MiniColumn {
 	return &MiniColumn{
 		clusterThreshold: clusterThreshold,
 		memoryLimit:      memoryLimit,
-		level:            250,
+		level:            50,
 		outputVector:     bitarray.NewBitArray(256),
 	}
 }
@@ -47,21 +47,46 @@ func (mc *MiniColumn) SetLearningVector(learningVector bitarray.BitArray) {
 func (mc *MiniColumn) Next() {
 	mc.ActivateClusters()
 	mc.MakeOutVector()
-	/*mc.ModifyClusters()
-	mc.ConsolidateMemory()*/
+	mc.ModifyClusters()
+	mc.ConsolidateMemory()
+}
+
+func (mc *MiniColumn) ModifyClusters() {
+
+}
+
+func (mc *MiniColumn) ConsolidateMemory() {
+
 }
 
 func (mc *MiniColumn) ActivateClusters() {
 	for i, point := range mc.cs.Points {
-		maxPotential := 0
+		pointPotential := 0
 		for j, cluster := range point.Memory {
-			potential := cluster.SetCurrentPotential(mc.inputVector, mc.learningVector)
-			point.Memory[j] = cluster
-			if potential > maxPotential {
-				maxPotential = potential
+			potential, inputBits := cluster.GetCurrentPotential(mc.inputVector)
+			inputSize := cluster.GetInputSize()
+			if potential == inputSize {
+				cluster.SetActivationStatus(ClusterStatusFull)
+				cluster.ActivationStateFullCounter++
+				if mc.learningVector.Intersects(cluster.targetBitSet) {
+					cluster.ErrorCompleteCounter++
+				}
+				if cluster.Status == ClusterPermanent2 {
+					pointPotential += potential - 3 + 1
+				}
+			} else if potential >= 3 {
+				cluster.SetActivationStatus(ClusterStatePartial)
+				cluster.ActivationStatePartialCounter++
+				outBits := mc.learningVector.And(cluster.targetBitSet).ToNums()
+				if len(outBits) == 0 {
+					cluster.ErrorPartialCounter++
+				} else {
+					cluster.SetHistory(inputBits, outBits)
+				}
 			}
+			point.Memory[j] = cluster
 		}
-		point.SetPotential(maxPotential)
+		point.SetPotential(pointPotential)
 		mc.cs.Points[i] = point
 	}
 }
@@ -72,7 +97,7 @@ func (mc *MiniColumn) MakeOutVector() {
 		for _, pointId := range currentOutBitPointsMap {
 			p += mc.cs.Points[pointId].GetPotential()
 		}
-		if p > mc.level {
+		if p >= mc.level {
 			mc.outputVector.SetBit(uint64(i))
 		}
 	}

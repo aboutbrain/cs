@@ -9,33 +9,64 @@ import (
 const (
 	ClusterTmp = iota
 	ClusterPermanent1
-	ClusterPremanent2
+	ClusterPermanent2
 	ClusterDeleting
 )
 
+const (
+	ClusterStateNon = iota
+	ClusterStatusFull
+	ClusterStatePartial
+)
+
+type InputBits []uint64
+type OutputBits []uint64
+type History struct {
+	InputBits
+	OutputBits
+}
+
 type Cluster struct {
-	Status            int
-	inputBitSet       bitarray.BitArray
-	targetBitSet      bitarray.BitArray
-	potential         int
-	ActivationCounter int
-	ErrorCounter      int
+	Status                        int
+	inputBitSet                   bitarray.BitArray
+	targetBitSet                  bitarray.BitArray
+	ActivationState               int
+	potential                     int
+	ActivationStateFullCounter    int
+	ActivationStatePartialCounter int
+	ErrorCompleteCounter          int
+	ErrorPartialCounter           int
+	Weights                       map[int]float32
+	HistoryMemory                 []History
 }
 
 func NewCluster(inputBitSet, targetBitSet bitarray.BitArray) *Cluster {
 	c := &Cluster{
-		Status: ClusterTmp,
+		Status:          ClusterTmp,
+		ActivationState: ClusterStateNon,
+		Weights:         make(map[int]float32),
 	}
 	c.inputBitSet = inputBitSet
 	c.targetBitSet = targetBitSet
 	return c
 }
 
-func (c *Cluster) SetCurrentPotential(inputVector, targetVector bitarray.BitArray) int {
-	inputPotential := len(inputVector.And(c.inputBitSet).ToNums())
-	outputPotential := len(targetVector.And(c.targetBitSet).ToNums())
-	c.potential = inputPotential + outputPotential
-	return c.potential
+func (c *Cluster) GetCurrentPotential(inputVector bitarray.BitArray) (int, InputBits) {
+	inputBits := inputVector.And(c.inputBitSet).ToNums()
+	c.potential = len(inputBits)
+	return c.potential, inputBits
+}
+
+func (c *Cluster) SetHistory(inputBits InputBits, outputBits OutputBits) {
+	c.HistoryMemory = append(c.HistoryMemory, History{InputBits: inputBits, OutputBits: outputBits})
+}
+
+func (c *Cluster) SetStatus(status int) {
+	c.Status = status
+}
+
+func (c *Cluster) SetActivationStatus(status int) {
+	c.ActivationState = status
 }
 
 func (c *Cluster) GetInputSize() int {
@@ -54,4 +85,8 @@ func (c *Cluster) GetHash() string {
 		hash += "." + strconv.Itoa(int(v))
 	}
 	return hash
+}
+
+func (c *Cluster) MainComponent() {
+
 }

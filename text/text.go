@@ -43,11 +43,11 @@ func GetCharContextMap(bitPerChar int, alpha string, capacity int, contextSize i
 	return &charContextCode
 }
 
-func GetTextFragmentCode(txtFragment string, charContextCodes CharContext) bitarray.BitArray {
-	code := bitarray.NewBitArray(256)
+func GetTextFragmentCode(txtFragment string, charContextCodes *CharContextCodes) bitarray.BitArray {
+	code := bitarray.NewBitArray(uint64(charContextCodes.VectorCapacity))
 	for i, char := range txtFragment {
 		//fmt.Printf(", CharCode: %d", char)
-		codeCurrent := charContextCodes[int(char)][i]
+		codeCurrent := charContextCodes.CharContext[int(char)][i]
 		if codeCurrent == nil {
 			//fmt.Errorf("CharCode: %d", char)
 		}

@@ -11,24 +11,29 @@ var _ = log.Printf // For debugging; delete when done.
 var _ = fmt.Printf // For debugging; delete when done.
 
 type MiniColumn struct {
-	inputLen         int
-	inputVector      bitarray.BitArray
-	outputVector     bitarray.BitArray
-	outputLen        int
-	learningVector   bitarray.BitArray
-	cs               *CombinatorialSpace
-	clusterThreshold int
-	epoch            int
-	memoryLimit      int
-	level            int
+	inputVector                bitarray.BitArray
+	inputVectorLen             uint64
+	inputLen                   int
+	outputVector               bitarray.BitArray
+	outputVectorLen            uint64
+	outputLen                  int
+	learningVector             bitarray.BitArray
+	cs                         *CombinatorialSpace
+	clusterThreshold           int
+	clusterActivationThreshold int
+	epoch                      int
+	memoryLimit                int
+	level                      int
 }
 
-func NewMiniColumn(clusterThreshold, memoryLimit int) *MiniColumn {
+func NewMiniColumn(clusterThreshold, memoryLimit int, inputVectorLen, outputVectorLen uint64) *MiniColumn {
 	return &MiniColumn{
 		clusterThreshold: clusterThreshold,
 		memoryLimit:      memoryLimit,
 		level:            4,
-		outputVector:     bitarray.NewBitArray(256),
+		inputVectorLen:   inputVectorLen,
+		outputVectorLen:  outputVectorLen,
+		outputVector:     bitarray.NewBitArray(outputVectorLen),
 	}
 }
 
@@ -39,6 +44,8 @@ func (mc *MiniColumn) SetCombinatorialSpace(cs *CombinatorialSpace) {
 func (mc *MiniColumn) SetInputVector(inputVector bitarray.BitArray) {
 	mc.inputVector = inputVector
 	mc.inputLen = len(mc.inputVector.ToNums())
+	/*capacity := inputVector.Capacity()
+	_ = capacity*/
 }
 
 func (mc *MiniColumn) SetLearningVector(learningVector bitarray.BitArray) {
@@ -101,7 +108,7 @@ func (mc *MiniColumn) ConsolidateMemory() {
 		deleted := 0
 		for clusterId, cluster := range point.Memory {
 			j := clusterId - deleted
-			clusterAge := mc.cs.InternalTime-cluster.startTime
+			clusterAge := mc.cs.InternalTime - cluster.startTime
 			if clusterAge > 20 {
 				if float32(cluster.ErrorFullCounter)/float32(cluster.ActivationFullCounter) > 0.05 {
 					mc.cs.DeleteCluster(&point, j)
@@ -116,8 +123,8 @@ func (mc *MiniColumn) ConsolidateMemory() {
 			}
 			switch {
 			/*case cluster.Status == ClusterTmp && cluster.ActivationState == ClusterStatusFull:
-				cluster.Status = ClusterPermanent2
-				mc.cs.clustersPermanent++*/
+			cluster.Status = ClusterPermanent2
+			mc.cs.clustersPermanent++*/
 			case cluster.Status == ClusterTmp && cluster.LearnCounter > 6:
 				cluster.Status = ClusterPermanent1
 			case cluster.Status == ClusterPermanent1 && cluster.LearnCounter > 16:
@@ -192,8 +199,8 @@ func (mc *MiniColumn) AddNewClusters() {
 		outputsActiveLen := len(outputsActiveCount.ToNums())
 		memorySize := len(point.Memory)
 
-		if receptorsActiveLen >= 2 && outputsActiveLen >= 2 && memorySize < mc.memoryLimit {
-			cluster := NewCluster(receptorsActiveCount, outputsActiveCount)
+		if receptorsActiveLen >= 3 && outputsActiveLen >= 3 && memorySize < mc.memoryLimit {
+			cluster := NewCluster(receptorsActiveCount, outputsActiveCount, mc.inputVectorLen)
 			cluster.startTime = mc.cs.InternalTime
 			hash := cluster.GetHash()
 			if !mc.cs.CheckOutHashSet(pointId, hash) {

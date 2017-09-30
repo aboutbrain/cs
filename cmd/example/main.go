@@ -14,8 +14,8 @@ import (
 var _ = fmt.Printf // For debugging; delete when done.
 
 const (
-	InputVectorSize            = 256
-	OutputVectorSize           = 256
+	InputVectorSize            = 128
+	OutputVectorSize           = 128
 	ContextSize                = 10
 	CombinatorialSpaceSize     = 60000
 	ReceptorsPerPoint          = 32
@@ -29,14 +29,14 @@ const (
 func main() {
 	rand.Seed(time.Now().Unix())
 
-	//charContextVectors := text.GetCharContextMap(CharacterBits, text.Alpha, InputVectorSize, ContextSize)
+	charContextVectors := text.GetCharContextMap(CharacterBits, text.Alpha, InputVectorSize, ContextSize)
 
 	path := "codes.json"
-	//persist.ToFile(path, charContextVectors)
+	persist.ToFile(path, charContextVectors)
 	codes := persist.FromFile(path)
 
 	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, ReceptorsPerPoint, OutputsPerPoint, OutputVectorSize)
-	mc := cs.NewMiniColumn(ClusterThreshold, PointMemoryLimit)
+	mc := cs.NewMiniColumn(ClusterThreshold, PointMemoryLimit, InputVectorSize, OutputVectorSize)
 	mc.SetCombinatorialSpace(comSpace)
 
 	day := true
@@ -46,7 +46,7 @@ func main() {
 		textFragment := text.GetTextFragment(i, 1)
 		//textFragment := "a"
 		fmt.Printf("i: %d, InputText : \"%s\"\n", i, textFragment)
-		sourceCode := text.GetTextFragmentCode(textFragment, codes.CharContext)
+		sourceCode := text.GetTextFragmentCode(textFragment, codes)
 
 		learningCode := codes.CharContext[int([]rune(textFragment)[0])][1]
 		/*learningText := ""
@@ -73,9 +73,9 @@ func main() {
 
 		total, permanent := comSpace.ClustersCounters()
 		fmt.Printf("Clusters: %d, Permanent: %d\n", total, permanent)
-		fmt.Printf("InputVector:   %s\n", cs.BitArrayToString(sourceCode))
-		fmt.Printf("OutputVector:  %s\n", cs.BitArrayToString(mc.OutVector()))
-		fmt.Printf("LerningVector: %s\n", cs.BitArrayToString(learningCode))
+		fmt.Printf("InputVector:   %s\n", cs.BitArrayToString(sourceCode, InputVectorSize))
+		fmt.Printf("OutputVector:  %s\n", cs.BitArrayToString(mc.OutVector(), OutputVectorSize))
+		fmt.Printf("LerningVector: %s\n", cs.BitArrayToString(learningCode, OutputVectorSize))
 		nVector := learningCode.Equals(mc.OutVector())
 		if !nVector {
 			fmt.Println("\033[31mFAIL!!\033[0m\n")

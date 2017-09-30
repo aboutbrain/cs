@@ -40,13 +40,15 @@ type Cluster struct {
 	Weights                  map[int]float32
 	HistoryMemory            []History
 	LearnCounter             int
+	inputLen                 uint64
 }
 
-func NewCluster(inputBitSet, targetBitSet bitarray.BitArray) *Cluster {
+func NewCluster(inputBitSet, targetBitSet bitarray.BitArray, inputLen uint64) *Cluster {
 	c := &Cluster{
 		Status:          ClusterTmp,
 		ActivationState: ClusterStateNon,
 		Weights:         make(map[int]float32),
+		inputLen: inputLen,
 	}
 	c.inputBitSet = inputBitSet
 	c.targetBitSet = targetBitSet
@@ -94,7 +96,7 @@ func (c *Cluster) GetHash() string {
 }
 
 func (c *Cluster) SetNewBits(nums []uint64) {
-	a := bitarray.NewBitArray(256)
+	a := bitarray.NewBitArray(c.inputLen)
 	for _, num := range nums {
 		a.SetBit(num)
 	}

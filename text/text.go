@@ -7,7 +7,7 @@ import (
 	"github.com/golang-collections/go-datastructures/bitarray"
 )
 
-const Alpha = " abcdefghijklmnopqrstuvwxyz.,*“”’?!-:\n"
+const Alpha = " abcdefghijklmnopqrstuvwxyz.,*“”’?!-:�\n"
 
 //const Alpha = " ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -56,7 +56,7 @@ func GetTextFragmentCode(txtFragment string, charContextCodes *CharContextCodes)
 	return code
 }
 
-func GetTextFragment(start, length int) string {
+func GetTextFragment(sourceText string, start, length int) string {
 	source := sourceText
 	return strings.ToLower(source[start : start+length])
 }

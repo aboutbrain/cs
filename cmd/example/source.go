@@ -1,4 +1,4 @@
-package text
+package main
 
 const sourceText = `
 Annotation

@@ -18,8 +18,8 @@ const (
 	OutputVectorSize           = 128
 	ContextSize                = 10
 	CombinatorialSpaceSize     = 60000
-	ReceptorsPerPoint          = 32
-	OutputsPerPoint            = 32
+	ReceptorsPerPoint          = 16
+	OutputsPerPoint            = 16
 	ClusterThreshold           = 6
 	ClusterActivationThreshold = 4
 	CharacterBits              = 8
@@ -36,14 +36,14 @@ func main() {
 	codes := persist.FromFile(path)
 
 	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, ReceptorsPerPoint, OutputsPerPoint, OutputVectorSize)
-	mc := cs.NewMiniColumn(ClusterThreshold, PointMemoryLimit, InputVectorSize, OutputVectorSize)
+	mc := cs.NewMiniColumn(ClusterThreshold, ClusterActivationThreshold, PointMemoryLimit, InputVectorSize, OutputVectorSize)
 	mc.SetCombinatorialSpace(comSpace)
 
 	day := true
 	j := 0
 
 	for i := 0; i < 10000; i += 1 {
-		textFragment := text.GetTextFragment(i, 1)
+		textFragment := text.GetTextFragment(sourceText, i, 1)
 		//textFragment := "a"
 		fmt.Printf("i: %d, InputText : \"%s\"\n", i, textFragment)
 		sourceCode := text.GetTextFragmentCode(textFragment, codes)
@@ -66,7 +66,7 @@ func main() {
 		} else {
 			fmt.Println("Ночь")
 		}
-		if j == 100 {
+		if j == 300 {
 			j = 0
 			day = !day
 		}

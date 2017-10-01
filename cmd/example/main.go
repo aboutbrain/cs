@@ -66,7 +66,7 @@ func main() {
 
 	//fragmentLength := 5
 	for i := 0; i < 10; i++ {
-		for j := range words {
+		for j := 0; j < 1000; j++ {
 			textFragment := strings.ToLower(words[j])
 			fmt.Printf("i: %d, InputText : \"%s\"\n", j, textFragment)
 			sourceCode := text.GetTextFragmentCode(textFragment, codes)
@@ -83,7 +83,7 @@ func main() {
 			} else {
 				fmt.Println("Ночь")
 			}
-			if t == 300 {
+			if t == 1000 {
 				t = 0
 				day = !day
 			}

@@ -106,21 +106,27 @@ func (mc *MiniColumn) ConsolidateMemory() {
 		for clusterId, cluster := range point.Memory {
 			j := clusterId - deleted
 			clusterAge := mc.cs.InternalTime - cluster.startTime
-			if clusterAge > 20 {
+			//if clusterAge > 10 {
 				errorFull := float32(cluster.ErrorFullCounter) / float32(cluster.ActivationFullCounter)
-				if errorFull > 0.05 && cluster.ActivationFullCounter > 10 {
+				if errorFull > 0.05 && cluster.ActivationFullCounter > 5 {
 					mc.cs.DeleteCluster(&point, j)
 					deleted++
 					continue
 				}
 				errorPartial := float32(cluster.ErrorPartialCounter) / float32(cluster.ActivationPartialCounter)
-				if errorPartial > 0.3 && cluster.ActivationPartialCounter > 10 {
+				if errorPartial > 0.3 && cluster.ActivationPartialCounter > 5 {
 					mc.cs.DeleteCluster(&point, j)
 					deleted++
 					continue
 				}
-			}
+			//}
 			switch {
+			case cluster.Status == ClusterTmp && clusterAge > 100 && errorFull == 0: {
+				cluster.Status = ClusterPermanent1
+			}
+			case cluster.Status == ClusterPermanent1 && clusterAge > 100 && errorFull == 0:
+				cluster.Status = ClusterPermanent2
+				mc.cs.clustersPermanent++
 			case cluster.Status == ClusterTmp && cluster.LearnCounter > 6:
 				cluster.Status = ClusterPermanent1
 			case cluster.Status == ClusterPermanent1 && cluster.LearnCounter > 16:
@@ -140,6 +146,7 @@ func (mc *MiniColumn) ActivateClusters() {
 		clusters := 0
 		for clusterId, cluster := range point.Memory {
 			clusters++
+			clusterAge := mc.cs.InternalTime - cluster.startTime
 			potential, inputBits := cluster.GetCurrentPotential(mc.inputVector)
 			inputSize := cluster.GetInputSize()
 			active, _ := mc.learningVector.GetBit(uint64(point.GetOutputBit()))
@@ -147,6 +154,7 @@ func (mc *MiniColumn) ActivateClusters() {
 				cluster.SetActivationStatus(ClusterStatusFull)
 				cluster.ActivationFullCounter++
 				//cluster.LearnCounterIncrease()
+				fmt.Printf("ClusterFull: age: %d, %+v \n", clusterAge, cluster)
 				if !active {
 					cluster.ErrorFullCounter++
 				}

@@ -3,30 +3,23 @@ package cs
 import "github.com/golang-collections/go-datastructures/bitarray"
 
 type Point struct {
-	id               int
-	inputVectorSize  int
-	outputVectorSize int
-	bitsPerInput     int
-	receptorSet      bitarray.BitArray
-	bitsPerOutput    int
-	outputSet        bitarray.BitArray
-	Memory           []Cluster
-	potential        int
-	OutputBitArray   []int
+	id              int
+	inputVectorSize int
+	bitsPerInput    int
+	receptorSet     bitarray.BitArray
+	Memory          []Cluster
+	potential       int
+	OutputBit       int
 }
 
-func NewPoint(id, inputVectorSize, outputVectorSize int, bitsPerInput, bitsPerOutput uint64) *Point {
+func NewPoint(id, inputVectorSize int, bitsPerInput uint64) *Point {
 	p := &Point{
-		id:               id,
-		inputVectorSize:  inputVectorSize,
-		outputVectorSize: outputVectorSize,
-		bitsPerInput:     int(bitsPerInput),
-		receptorSet:      bitarray.NewBitArray(uint64(inputVectorSize)),
-		bitsPerOutput:    int(bitsPerOutput),
-		outputSet:        bitarray.NewBitArray(uint64(outputVectorSize)),
+		id:              id,
+		inputVectorSize: inputVectorSize,
+		bitsPerInput:    int(bitsPerInput),
+		receptorSet:     bitarray.NewBitArray(uint64(inputVectorSize)),
 	}
 	p.setReceptors()
-	p.setOutputs()
 	return p
 }
 
@@ -38,14 +31,11 @@ func (p *Point) SetMemory(cluster *Cluster) {
 	p.Memory = append(p.Memory, *cluster)
 }
 
-func(p *Point) Cluster(clusterId int) *Cluster {
-	//if len(p.Memory) > 0 {
-		return &p.Memory[clusterId]
-	//}
-	//return nil
+func (p *Point) Cluster(clusterId int) *Cluster {
+	return &p.Memory[clusterId]
 }
 
-func (p *Point) DeleteCluster(clusterId int) *Point{
+func (p *Point) DeleteCluster(clusterId int) *Point {
 	p.Memory = append(p.Memory[:clusterId], p.Memory[clusterId+1:]...)
 	return p
 }
@@ -61,20 +51,12 @@ func (p *Point) GetReceptors() bitarray.BitArray {
 	return p.receptorSet
 }
 
-func (p *Point) setOutputs() {
-	for i := 0; i < p.bitsPerOutput; i++ {
-		bit := Random(0, p.outputVectorSize)
-		p.outputSet.SetBit(uint64(bit))
-		p.OutputBitArray = append(p.OutputBitArray, bit)
-	}
+func (p *Point) GetOutputBit() int {
+	return p.OutputBit
 }
 
-func (p *Point) GetOutputs() bitarray.BitArray {
-	return p.outputSet
-}
-
-func (p *Point) SetPotential(i int) {
-	p.potential = i
+func (p *Point) SetPotential(potential int) {
+	p.potential = potential
 }
 
 func (p *Point) GetPotential() int {

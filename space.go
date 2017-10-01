@@ -7,7 +7,6 @@ type CombinatorialSpace struct {
 	InternalTime             int
 	NumberOfPoints           int
 	NumberOfReceptorsInPoint uint64
-	NumberOfOutputsInPoint   uint64
 	NumberOfBitInOutCode     int
 	Points                   []Point
 	OutHashSet               []HashMap
@@ -16,11 +15,10 @@ type CombinatorialSpace struct {
 	clustersPermanent        int
 }
 
-func NewCombinatorialSpace(size int, receptors, outputs uint64, outCode int) *CombinatorialSpace {
+func NewCombinatorialSpace(size int, receptors uint64, outCode int) *CombinatorialSpace {
 	space := &CombinatorialSpace{
 		NumberOfPoints:           size,
 		NumberOfReceptorsInPoint: receptors,
-		NumberOfOutputsInPoint:   outputs,
 		NumberOfBitInOutCode:     outCode,
 	}
 	space.outBitToPointsMap = make(map[int][]int)
@@ -34,14 +32,12 @@ func NewCombinatorialSpace(size int, receptors, outputs uint64, outCode int) *Co
 
 func (cs *CombinatorialSpace) createPoints() {
 	for i := 0; i < cs.NumberOfPoints; i++ {
-		point := NewPoint(i, cs.NumberOfBitInOutCode, cs.NumberOfBitInOutCode, cs.NumberOfReceptorsInPoint, cs.NumberOfOutputsInPoint)
+		point := NewPoint(i, cs.NumberOfBitInOutCode, cs.NumberOfReceptorsInPoint)
 		cs.Points = append(cs.Points, *point)
-		outBits := point.GetOutputs()
-		for _, v := range outBits.ToNums() {
-			arr := cs.outBitToPointsMap[int(v)]
-			arr = append(arr, i)
-			cs.outBitToPointsMap[int(v)] = arr
-		}
+		outBit := point.GetOutputBit()
+		arr := cs.outBitToPointsMap[outBit]
+		arr = append(arr, i)
+		cs.outBitToPointsMap[outBit] = arr
 	}
 }
 

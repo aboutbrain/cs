@@ -20,17 +20,15 @@ const (
 )
 
 type InputBits []uint64
-type OutputBits []uint64
 type History struct {
 	InputBits
-	OutputBits
+	OutputBit bool
 }
 
 type Cluster struct {
 	Status                   int
 	startTime                int
 	inputBitSet              bitarray.BitArray
-	targetBitSet             bitarray.BitArray
 	ActivationState          int
 	potential                int
 	ActivationFullCounter    int
@@ -43,16 +41,14 @@ type Cluster struct {
 	inputLen                 uint64
 }
 
-func NewCluster(inputBitSet, targetBitSet bitarray.BitArray, inputLen uint64) *Cluster {
-	c := &Cluster{
+func NewCluster(inputBitSet bitarray.BitArray, inputLen uint64) *Cluster {
+	return &Cluster{
 		Status:          ClusterTmp,
 		ActivationState: ClusterStateNon,
 		Weights:         make(map[int]float32),
-		inputLen: inputLen,
+		inputLen:        inputLen,
+		inputBitSet:     inputBitSet,
 	}
-	c.inputBitSet = inputBitSet
-	c.targetBitSet = targetBitSet
-	return c
 }
 
 func (c *Cluster) GetCurrentPotential(inputVector bitarray.BitArray) (int, InputBits) {
@@ -61,8 +57,8 @@ func (c *Cluster) GetCurrentPotential(inputVector bitarray.BitArray) (int, Input
 	return c.potential, inputBits
 }
 
-func (c *Cluster) SetHistory(inputBits InputBits, outputBits OutputBits) {
-	c.HistoryMemory = append(c.HistoryMemory, History{InputBits: inputBits, OutputBits: outputBits})
+func (c *Cluster) SetHistory(inputBits InputBits, active bool) {
+	c.HistoryMemory = append(c.HistoryMemory, History{InputBits: inputBits, OutputBit: active})
 }
 
 func (c *Cluster) SetStatus(status int) {
@@ -82,14 +78,9 @@ func (c *Cluster) GetInputSize() int {
 }
 
 func (c *Cluster) GetHash() string {
-	nums := c.inputBitSet.ToNums()
+	bitNums := c.inputBitSet.ToNums()
 	hash := ""
-	for _, v := range nums {
-		hash += "." + strconv.Itoa(int(v))
-	}
-	hash += "-"
-	nums = c.targetBitSet.ToNums()
-	for _, v := range nums {
+	for _, v := range bitNums {
 		hash += "." + strconv.Itoa(int(v))
 	}
 	return hash

@@ -1,25 +1,27 @@
 package main
 
 import (
-	"math/rand"
-	"time"
-
 	"fmt"
+
+	"strings"
+	"unicode"
+
+	"io/ioutil"
 
 	"github.com/aboutbrain/cs"
 	"github.com/aboutbrain/cs/persist"
 	"github.com/aboutbrain/cs/text"
+	"github.com/golang-collections/go-datastructures/bitarray"
 )
 
 var _ = fmt.Printf // For debugging; delete when done.
 
 const (
-	InputVectorSize            = 128
-	OutputVectorSize           = 128
-	ContextSize                = 10
+	InputVectorSize            = 256
+	OutputVectorSize           = 256
+	ContextSize                = 15
 	CombinatorialSpaceSize     = 60000
-	ReceptorsPerPoint          = 16
-	OutputsPerPoint            = 16
+	ReceptorsPerPoint          = 32
 	ClusterThreshold           = 6
 	ClusterActivationThreshold = 4
 	CharacterBits              = 8
@@ -27,7 +29,27 @@ const (
 )
 
 func main() {
-	rand.Seed(time.Now().Unix())
+	//rand.Seed(time.Now().Unix())
+
+	b, err := ioutil.ReadFile("TheOldManAndTheSea.txt") // just pass the file name
+	if err != nil {
+		fmt.Print(err)
+	}
+	str := string(b) // convert content to a 'string'
+
+	f := func(c rune) bool {
+		return !unicode.IsLetter(c) && !unicode.IsNumber(c)
+	}
+
+	words := strings.FieldsFunc(str, f)
+	fmt.Printf("WordsTotal: %d\n", len(words))
+
+	wordCodeMap := make(map[string]bitarray.BitArray)
+
+	for _, word := range words {
+		wordCodeMap[strings.ToLower(word)] = getRandomCode(16, OutputVectorSize)
+	}
+	fmt.Printf("WordsCount: %d\n", len(wordCodeMap))
 
 	charContextVectors := text.GetCharContextMap(CharacterBits, text.Alpha, InputVectorSize, ContextSize)
 
@@ -35,57 +57,67 @@ func main() {
 	persist.ToFile(path, charContextVectors)
 	codes := persist.FromFile(path)
 
-	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, ReceptorsPerPoint, OutputsPerPoint, OutputVectorSize)
+	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, ReceptorsPerPoint, OutputVectorSize)
 	mc := cs.NewMiniColumn(ClusterThreshold, ClusterActivationThreshold, PointMemoryLimit, InputVectorSize, OutputVectorSize)
 	mc.SetCombinatorialSpace(comSpace)
 
 	day := true
-	j := 0
+	t := 0
 
-	for i := 0; i < 10000; i += 1 {
-		textFragment := text.GetTextFragment(sourceText, i, 1)
-		//textFragment := "a"
-		fmt.Printf("i: %d, InputText : \"%s\"\n", i, textFragment)
-		sourceCode := text.GetTextFragmentCode(textFragment, codes)
+	//fragmentLength := 5
+	for i := 0; i < 10; i++ {
+		for j := range words {
+			textFragment := strings.ToLower(words[j])
+			fmt.Printf("i: %d, InputText : \"%s\"\n", j, textFragment)
+			sourceCode := text.GetTextFragmentCode(textFragment, codes)
 
-		learningCode := codes.CharContext[int([]rune(textFragment)[0])][1]
-		/*learningText := ""
-		if i > 1 {
-			learningText = text.GetTextFragment(i-1, 1)
-		}
-		fmt.Printf("i: %d, OutputText: \"%s\"\n", i, learningText)
-		learningCode := text.GetTextFragmentCode(learningText, codes.CharContext)
-		*/
-		mc.SetInputVector(sourceCode)
-		mc.SetLearningVector(learningCode)
+			learningCode := wordCodeMap[textFragment]
 
-		mc.Next()
-		if day == true {
-			mc.AddNewClusters()
-			fmt.Println("День")
-		} else {
-			fmt.Println("Ночь")
-		}
-		if j == 300 {
-			j = 0
-			day = !day
-		}
+			mc.SetInputVector(sourceCode)
+			mc.SetLearningVector(learningCode)
 
-		total, permanent := comSpace.ClustersCounters()
-		fmt.Printf("Clusters: %d, Permanent: %d\n", total, permanent)
-		fmt.Printf("InputVector:   %s\n", cs.BitArrayToString(sourceCode, InputVectorSize))
-		fmt.Printf("OutputVector:  %s\n", cs.BitArrayToString(mc.OutVector(), OutputVectorSize))
-		fmt.Printf("LerningVector: %s\n", cs.BitArrayToString(learningCode, OutputVectorSize))
-		nVector := learningCode.Equals(mc.OutVector())
-		if !nVector {
-			fmt.Println("\033[31mFAIL!!\033[0m\n")
-		} else {
-			fmt.Println("\033[32mPASS!!\033[0m\n")
+			mc.Next()
+			if day == true {
+				mc.AddNewClusters()
+				fmt.Println("День")
+			} else {
+				fmt.Println("Ночь")
+			}
+			if t == 300 {
+				t = 0
+				day = !day
+			}
+
+			total, permanent := comSpace.ClustersCounters()
+			fmt.Printf("Clusters: %d, Permanent: %d\n", total, permanent)
+			fmt.Printf("InputVector:   %s\n", cs.BitArrayToString(sourceCode, InputVectorSize))
+			fmt.Printf("OutputVector:  %s\n", cs.BitArrayToString(mc.OutVector(), OutputVectorSize))
+			fmt.Printf("LerningVector: %s\n", cs.BitArrayToString(learningCode, OutputVectorSize))
+			nVector := learningCode.Equals(mc.OutVector())
+			if !nVector {
+				fmt.Println("\033[31mFAIL!!\033[0m\n")
+			} else {
+				fmt.Println("\033[32mPASS!!\033[0m\n")
+			}
+			comSpace.InternalTime++
+			t++
 		}
-		comSpace.InternalTime++
-		j++
 	}
 
 	point := comSpace.Points[5]
 	fmt.Printf("%#v\n", point)
+}
+
+func getRandomCode(bitPerWord, capacity int) bitarray.BitArray {
+	arr := bitarray.NewBitArray(uint64(capacity))
+	for j := 0; j < bitPerWord; j++ {
+	rnd:
+		bitNumber := cs.Random(0, capacity-1)
+		if a, _ := arr.GetBit(uint64(bitNumber)); a != true {
+			arr.SetBit(uint64(bitNumber))
+		} else {
+			goto rnd
+		}
+	}
+	return arr
 }

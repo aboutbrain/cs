@@ -116,11 +116,11 @@ func (mc *MiniColumn) ConsolidateMemory() {
 		deleted := 0
 		for clusterId, cluster := range point.Memory {
 			j := clusterId - deleted
-			//totalCounter := cluster.ActivationFullCounter + cluster.ActivationPartialCounter
+			totalCounter := cluster.ActivationFullCounter + cluster.ActivationPartialCounter
 
 			if cluster.ActivationFullCounter > 25 {
 				errorFull := float32(cluster.ErrorFullCounter) / float32(cluster.ActivationFullCounter)
-				if errorFull > 0.2 {
+				if errorFull > 0.05 {
 					mc.cs.DeleteCluster(&point, j)
 					deleted++
 					continue
@@ -143,10 +143,10 @@ func (mc *MiniColumn) ConsolidateMemory() {
 			case cluster.Status == ClusterPermanent1 && clusterAge > 100 && errorFull == 0:
 				cluster.Status = ClusterPermanent2
 				mc.cs.clustersPermanent++*/
-			case cluster.Status == ClusterTmp && (cluster.LearnCounter > 6 /*|| totalCounter > 25*/):
+			case cluster.Status == ClusterTmp && (cluster.LearnCounter > 6 || totalCounter > 25):
 				cluster.Status = ClusterPermanent1
 				mc.cs.clustersPermanent1++
-			case cluster.Status == ClusterPermanent1 && (cluster.LearnCounter > 16 /* || totalCounter > 50*/):
+			case cluster.Status == ClusterPermanent1 && (cluster.LearnCounter > 16  || totalCounter > 50):
 				cluster.Status = ClusterPermanent2
 				mc.cs.clustersPermanent2++
 			}
@@ -161,6 +161,7 @@ func (mc *MiniColumn) ActivateClusters() {
 	clustersFullyActivated := 0
 	clustersPartialActivated := 0
 	for pointId, point := range mc.cs.Points {
+		point.potential = 0
 		pointPotential := 0
 		clusters := 0
 		for clusterId, cluster := range point.Memory {
@@ -181,20 +182,20 @@ func (mc *MiniColumn) ActivateClusters() {
 				if cluster.Status == ClusterPermanent2 {
 					pointPotential += potential - mc.clusterActivationThreshold + 1
 				}
-				switch {
+				/*switch {
 				case cluster.LearnCounter > 5:
 					{
 						fmt.Printf("\033[33mClusterFull\033[0m: %d, %+v \n", cluster.LearnCounter, cluster)
 					}
-					/*case cluster.LearnCounter > 0 && cluster.LearnCounter < 7: {
+					case cluster.LearnCounter > 0 && cluster.LearnCounter < 7: {
 						fmt.Printf("\033[33mClusterFull\033[0m:%d, age: %d, %+v \n", totalCounter, clusterAge, cluster)
 					}
 					case cluster.LearnCounter >= 7 && cluster.LearnCounter < 16: {
 						fmt.Printf("\033[32mClusterFull\033[0m:%d, age:, %d, %+v \n", totalCounter, clusterAge, cluster)
 					}
 					default:
-						fmt.Printf("ClusterFull:%d, age: %d, %+v \n", totalCounter, clusterAge, cluster)*/
-				}
+						fmt.Printf("ClusterFull:%d, age: %d, %+v \n", totalCounter, clusterAge, cluster)
+				}*/
 			} else if potential >= mc.clusterActivationThreshold {
 				clustersPartialActivated++
 				cluster.SetActivationStatus(ClusterStatePartial)
@@ -221,9 +222,9 @@ func (mc *MiniColumn) ActivateClusters() {
 		mc.cs.Points[pointId] = point
 	}
 	fmt.Printf("Clusters: Fully: %d, Partly: %d\n", clustersFullyActivated, clustersPartialActivated)
-	for i, v := range stat {
+	/*for i, v := range stat {
 		fmt.Printf("Clusters: %d, Points: %d\n", i, v)
-	}
+	}*/
 }
 
 func (mc *MiniColumn) MakeOutVector() {

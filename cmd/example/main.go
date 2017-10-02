@@ -8,12 +8,13 @@ import (
 
 	"io/ioutil"
 
+	"math/rand"
+	"time"
+
 	"github.com/aboutbrain/cs"
 	"github.com/aboutbrain/cs/persist"
 	"github.com/aboutbrain/cs/text"
 	"github.com/golang-collections/go-datastructures/bitarray"
-	"time"
-	"math/rand"
 )
 
 var _ = fmt.Printf // For debugging; delete when done.
@@ -76,28 +77,29 @@ func main() {
 	for i := 0; i < 100; i++ {
 		for j := 0; j < 1000; j++ {
 			word := strings.ToLower(words[j])
-
 			l := len(word)
+			if l >= 5 {
+				l = 5
+			}
+
+			txt5 := word[:l]
 			wordContextSize := ContextSize - l
-			context := cs.Random(0, wordContextSize - 1)
+			context := cs.Random(0, wordContextSize)
 
 			//context := 0
 			textFragment := strings.Repeat("_", context)
-			textFragment += word
-			after := strings.Repeat("_", ContextSize - len(textFragment))
+			textFragment += txt5
+			after := strings.Repeat("_", ContextSize-len(textFragment))
 			textFragment += after
 
-			fmt.Printf("i: %d, InputText : \"%s\"\n", i*100+j, textFragment)
+			fmt.Printf("i: %d, InputText  : \"%s\"\n", i*100+j, textFragment)
 			sourceCode := text.GetTextFragmentCode(textFragment, codes)
 
-			learningCode := wordCodeMap[word][0]
+			targetText := txt5 + strings.Repeat("_", ContextSize - l)
+			learningCode := text.GetTextFragmentCode(targetText, codes)
+			fmt.Printf("i: %d, TargetText : \"%s\"\n", i*100+j, targetText)
+			//learningCode := wordCodeMap[word][0]
 
-			// Add input noise
-			/*for k :=0; k < 5; k++ {
-				bitNum := cs.Random(0, 255)
-				sourceCode.ClearBit(uint64(bitNum))
-			}
-*/
 			mc.SetInputVector(sourceCode)
 			mc.SetLearningVector(learningCode)
 
@@ -127,7 +129,7 @@ func main() {
 	fmt.Printf("%#v\n", point)*/
 }
 
-func showVectors(source, output, learning bitarray.BitArray){
+func showVectors(source, output, learning bitarray.BitArray) {
 
 	fmt.Printf("InputVector:   %s\n", cs.BitArrayToString(source, InputVectorSize))
 	fmt.Printf("OutputVector:  %s\n", cs.BitArrayToString(output, OutputVectorSize))

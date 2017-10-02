@@ -22,7 +22,7 @@ var _ = fmt.Printf // For debugging; delete when done.
 const (
 	InputVectorSize            = 256
 	OutputVectorSize           = 256
-	ContextSize                = 15
+	ContextSize                = 6
 	CombinatorialSpaceSize     = 60000
 	ReceptorsPerPoint          = 32
 	ClusterThreshold           = 6
@@ -92,12 +92,12 @@ func main() {
 			after := strings.Repeat("_", ContextSize-len(textFragment))
 			textFragment += after
 
-			fmt.Printf("i: %d, InputText  : \"%s\"\n", i*100+j, textFragment)
+			fmt.Printf("i: %d, InputText  : \"%s\"\n", i*1000+j, textFragment)
 			sourceCode := text.GetTextFragmentCode(textFragment, codes)
 
 			targetText := txt5 + strings.Repeat("_", ContextSize - l)
 			learningCode := text.GetTextFragmentCode(targetText, codes)
-			fmt.Printf("i: %d, TargetText : \"%s\"\n", i*100+j, targetText)
+			fmt.Printf("i: %d, TargetText : \"%s\"\n", i*1000+j, targetText)
 			//learningCode := wordCodeMap[word][0]
 
 			mc.SetInputVector(sourceCode)

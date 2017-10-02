@@ -30,7 +30,7 @@ func NewMiniColumn(clusterThreshold, clusterActivationThreshold, memoryLimit int
 		clusterThreshold:           clusterThreshold,
 		clusterActivationThreshold: clusterActivationThreshold,
 		memoryLimit:                memoryLimit,
-		level:                      2,
+		level:                      1,
 		inputVectorLen:             inputVectorLen,
 		outputVectorLen:            outputVectorLen,
 		outputVector:               bitarray.NewBitArray(outputVectorLen),
@@ -51,7 +51,18 @@ func (mc *MiniColumn) SetLearningVector(learningVector bitarray.BitArray) {
 }
 
 func (mc *MiniColumn) Next() {
+	/*inputVectorSave := bitarray.NewBitArray(mc.inputVectorLen - 1)
+	inputVectorSave = inputVectorSave.Or(mc.inputVector)
+	// Add input noise
+	for k := 0; k < 1; k++ {
+		bitNum := Random(0, int(mc.inputVectorLen) - 1)
+		mc.inputVector.ClearBit(uint64(bitNum))
+	}
+	if inputVectorSave.Equals(mc.inputVector) {
+		fmt.Println("\033[33mШУМ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\033[0m")
+	}*/
 	mc.ActivateClusters()
+	//mc.inputVector = inputVectorSave
 	mc.MakeOutVector()
 	mc.ModifyClusters()
 	mc.ConsolidateMemory()
@@ -65,16 +76,16 @@ func (mc *MiniColumn) ModifyClusters() {
 			j := clusterId - deleted
 			clusters++
 			if cluster.Status != ClusterPermanent2 && (cluster.LearnCounter == 4 || cluster.LearnCounter == 16) {
-				f, clusterBits := cluster.BitActivationStatistic()
+				f := cluster.BitActivationStatistic()
 				clusterBitsNew := []uint64{}
-				for i, bitNumber := range clusterBits {
+				for i := range f {
 					if f[i] > 0.75 {
-						clusterBitsNew = append(clusterBitsNew, bitNumber)
+						clusterBitsNew = append(clusterBitsNew, uint64(i))
 					}
 				}
 				clusterBitsNewLen := len(clusterBitsNew)
-				if len(clusterBits) != clusterBitsNewLen {
-					if clusterBitsNewLen >= mc.clusterThreshold {
+				if len(f) != clusterBitsNewLen {
+					if clusterBitsNewLen >= mc.clusterActivationThreshold {
 						hashOld := cluster.GetHash()
 						cluster.SetNewBits(clusterBitsNew)
 						hashNew := cluster.GetHash()
@@ -105,33 +116,39 @@ func (mc *MiniColumn) ConsolidateMemory() {
 		deleted := 0
 		for clusterId, cluster := range point.Memory {
 			j := clusterId - deleted
-			clusterAge := mc.cs.InternalTime - cluster.startTime
-			//if clusterAge > 10 {
+			//totalCounter := cluster.ActivationFullCounter + cluster.ActivationPartialCounter
+
+			if cluster.ActivationFullCounter > 25 {
 				errorFull := float32(cluster.ErrorFullCounter) / float32(cluster.ActivationFullCounter)
-				if errorFull > 0.05 && cluster.ActivationFullCounter > 5 {
+				if errorFull > 0.2 {
 					mc.cs.DeleteCluster(&point, j)
 					deleted++
 					continue
 				}
+			}
+
+			if cluster.ActivationPartialCounter > 5 {
 				errorPartial := float32(cluster.ErrorPartialCounter) / float32(cluster.ActivationPartialCounter)
-				if errorPartial > 0.3 && cluster.ActivationPartialCounter > 5 {
+				if errorPartial > 0.3 {
 					mc.cs.DeleteCluster(&point, j)
 					deleted++
 					continue
 				}
-			//}
+			}
+
 			switch {
-			case cluster.Status == ClusterTmp && clusterAge > 100 && errorFull == 0: {
+			/*case cluster.Status == ClusterTmp && clusterAge > 100 && errorFull == 0: {
 				cluster.Status = ClusterPermanent1
 			}
 			case cluster.Status == ClusterPermanent1 && clusterAge > 100 && errorFull == 0:
 				cluster.Status = ClusterPermanent2
-				mc.cs.clustersPermanent++
-			case cluster.Status == ClusterTmp && cluster.LearnCounter > 6:
+				mc.cs.clustersPermanent++*/
+			case cluster.Status == ClusterTmp && (cluster.LearnCounter > 6 /*|| totalCounter > 25*/):
 				cluster.Status = ClusterPermanent1
-			case cluster.Status == ClusterPermanent1 && cluster.LearnCounter > 16:
+				mc.cs.clustersPermanent1++
+			case cluster.Status == ClusterPermanent1 && (cluster.LearnCounter > 16 /* || totalCounter > 50*/):
 				cluster.Status = ClusterPermanent2
-				mc.cs.clustersPermanent++
+				mc.cs.clustersPermanent2++
 			}
 			point.Memory[j] = cluster
 		}
@@ -141,35 +158,60 @@ func (mc *MiniColumn) ConsolidateMemory() {
 
 func (mc *MiniColumn) ActivateClusters() {
 	stat := make(map[int]int)
+	clustersFullyActivated := 0
+	clustersPartialActivated := 0
 	for pointId, point := range mc.cs.Points {
 		pointPotential := 0
 		clusters := 0
 		for clusterId, cluster := range point.Memory {
 			clusters++
-			clusterAge := mc.cs.InternalTime - cluster.startTime
+			//totalCounter := cluster.ActivationFullCounter + cluster.ActivationPartialCounter
+			//clusterAge := mc.cs.InternalTime - cluster.startTime
 			potential, inputBits := cluster.GetCurrentPotential(mc.inputVector)
 			inputSize := cluster.GetInputSize()
+			//historyLen := len(cluster.HistoryMemory)
 			active, _ := mc.learningVector.GetBit(uint64(point.GetOutputBit()))
 			if potential == inputSize {
 				cluster.SetActivationStatus(ClusterStatusFull)
 				cluster.ActivationFullCounter++
-				//cluster.LearnCounterIncrease()
-				fmt.Printf("ClusterFull: age: %d, %+v \n", clusterAge, cluster)
+				clustersFullyActivated++
 				if !active {
 					cluster.ErrorFullCounter++
 				}
 				if cluster.Status == ClusterPermanent2 {
 					pointPotential += potential - mc.clusterActivationThreshold + 1
 				}
+				switch {
+				case cluster.LearnCounter > 5:
+					{
+						fmt.Printf("\033[33mClusterFull\033[0m: %d, %+v \n", cluster.LearnCounter, cluster)
+					}
+					/*case cluster.LearnCounter > 0 && cluster.LearnCounter < 7: {
+						fmt.Printf("\033[33mClusterFull\033[0m:%d, age: %d, %+v \n", totalCounter, clusterAge, cluster)
+					}
+					case cluster.LearnCounter >= 7 && cluster.LearnCounter < 16: {
+						fmt.Printf("\033[32mClusterFull\033[0m:%d, age:, %d, %+v \n", totalCounter, clusterAge, cluster)
+					}
+					default:
+						fmt.Printf("ClusterFull:%d, age: %d, %+v \n", totalCounter, clusterAge, cluster)*/
+				}
 			} else if potential >= mc.clusterActivationThreshold {
+				clustersPartialActivated++
 				cluster.SetActivationStatus(ClusterStatePartial)
 				cluster.ActivationPartialCounter++
 				if !active {
 					cluster.ErrorPartialCounter++
 				} else {
-					cluster.SetHistory(inputBits, active)
+					if cluster.Status != ClusterPermanent2 {
+						cluster.SetHistory(inputBits, active)
+						//cluster.LearnCounterIncrease()
+					}
 				}
-				cluster.LearnCounterIncrease()
+				if cluster.Status != ClusterPermanent2 {
+					//cluster.SetHistory(inputBits, active)
+					cluster.LearnCounterIncrease()
+				}
+
 			}
 			point.Memory[clusterId] = cluster
 		}
@@ -178,6 +220,7 @@ func (mc *MiniColumn) ActivateClusters() {
 		point.SetPotential(pointPotential)
 		mc.cs.Points[pointId] = point
 	}
+	fmt.Printf("Clusters: Fully: %d, Partly: %d\n", clustersFullyActivated, clustersPartialActivated)
 	for i, v := range stat {
 		fmt.Printf("Clusters: %d, Points: %d\n", i, v)
 	}
@@ -188,7 +231,6 @@ func (mc *MiniColumn) MakeOutVector() {
 		p := 0
 		for _, pointId := range currentOutBitPointsMap {
 			p += mc.cs.Points[pointId].GetPotential()
-
 		}
 		if p >= mc.level {
 			mc.outputVector.SetBit(uint64(i))

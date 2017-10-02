@@ -12,6 +12,8 @@ import (
 	"github.com/aboutbrain/cs/persist"
 	"github.com/aboutbrain/cs/text"
 	"github.com/golang-collections/go-datastructures/bitarray"
+	"time"
+	"math/rand"
 )
 
 var _ = fmt.Printf // For debugging; delete when done.
@@ -29,7 +31,7 @@ const (
 )
 
 func main() {
-	//rand.Seed(time.Now().Unix())
+	rand.Seed(time.Now().Unix())
 
 	b, err := ioutil.ReadFile("TheOldManAndTheSea.txt") // just pass the file name
 	if err != nil {
@@ -44,10 +46,16 @@ func main() {
 	words := strings.FieldsFunc(str, f)
 	fmt.Printf("WordsTotal: %d\n", len(words))
 
-	wordCodeMap := make(map[string]bitarray.BitArray)
+	wordCodeMap := make(map[string]map[int]bitarray.BitArray)
 
 	for _, word := range words {
-		wordCodeMap[strings.ToLower(word)] = getRandomCode(16, OutputVectorSize)
+		l := len(word)
+		wordContextSize := ContextSize - l
+		m := make(map[int]bitarray.BitArray)
+		for i := 0; i < wordContextSize; i++ {
+			m[i] = getRandomCode(16, OutputVectorSize)
+		}
+		wordCodeMap[strings.ToLower(word)] = m
 	}
 	fmt.Printf("WordsCount: %d\n", len(wordCodeMap))
 
@@ -57,7 +65,7 @@ func main() {
 	persist.ToFile(path, charContextVectors)
 	codes := persist.FromFile(path)
 
-	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, ReceptorsPerPoint, OutputVectorSize)
+	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, InputVectorSize, ReceptorsPerPoint, OutputVectorSize)
 	mc := cs.NewMiniColumn(ClusterThreshold, ClusterActivationThreshold, PointMemoryLimit, InputVectorSize, OutputVectorSize)
 	mc.SetCombinatorialSpace(comSpace)
 
@@ -65,14 +73,31 @@ func main() {
 	t := 0
 
 	//fragmentLength := 5
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 100; i++ {
 		for j := 0; j < 1000; j++ {
-			textFragment := strings.ToLower(words[j])
-			fmt.Printf("i: %d, InputText : \"%s\"\n", j, textFragment)
+			word := strings.ToLower(words[j])
+
+			l := len(word)
+			wordContextSize := ContextSize - l
+			context := cs.Random(0, wordContextSize - 1)
+
+			//context := 0
+			textFragment := strings.Repeat("_", context)
+			textFragment += word
+			after := strings.Repeat("_", ContextSize - len(textFragment))
+			textFragment += after
+
+			fmt.Printf("i: %d, InputText : \"%s\"\n", i*100+j, textFragment)
 			sourceCode := text.GetTextFragmentCode(textFragment, codes)
 
-			learningCode := wordCodeMap[textFragment]
+			learningCode := wordCodeMap[word][0]
 
+			// Add input noise
+			/*for k :=0; k < 5; k++ {
+				bitNum := cs.Random(0, 255)
+				sourceCode.ClearBit(uint64(bitNum))
+			}
+*/
 			mc.SetInputVector(sourceCode)
 			mc.SetLearningVector(learningCode)
 
@@ -88,24 +113,46 @@ func main() {
 				day = !day
 			}
 
-			total, permanent := comSpace.ClustersCounters()
-			fmt.Printf("Clusters: %d, Permanent: %d\n", total, permanent)
-			fmt.Printf("InputVector:   %s\n", cs.BitArrayToString(sourceCode, InputVectorSize))
-			fmt.Printf("OutputVector:  %s\n", cs.BitArrayToString(mc.OutVector(), OutputVectorSize))
-			fmt.Printf("LerningVector: %s\n", cs.BitArrayToString(learningCode, OutputVectorSize))
-			nVector := learningCode.Equals(mc.OutVector())
-			if !nVector {
-				fmt.Println("\033[31mFAIL!!\033[0m\n")
-			} else {
-				fmt.Println("\033[32mPASS!!\033[0m\n")
-			}
+			total, permanent1, permanent2 := comSpace.ClustersCounters()
+			outputVector := mc.OutVector()
+			fmt.Printf("Clusters: %d, Permanent1: %d, Permanent2: %d\n", total, permanent1, permanent2)
+			showVectors(sourceCode, outputVector, learningCode)
+
 			comSpace.InternalTime++
 			t++
 		}
 	}
 
-	point := comSpace.Points[5]
-	fmt.Printf("%#v\n", point)
+	/*point := comSpace.Points[5]
+	fmt.Printf("%#v\n", point)*/
+}
+
+func showVectors(source, output, learning bitarray.BitArray){
+
+	fmt.Printf("InputVector:   %s\n", cs.BitArrayToString(source, InputVectorSize))
+	fmt.Printf("OutputVector:  %s\n", cs.BitArrayToString(output, OutputVectorSize))
+	fmt.Printf("LerningVector: %s\n", cs.BitArrayToString(learning, OutputVectorSize))
+	fmt.Printf("DeltaVector:   %s\n", BitArrayToString2(output, learning, OutputVectorSize))
+	nVector := learning.Equals(output)
+	if !nVector {
+		fmt.Println("\033[31mFAIL!!\033[0m\n")
+	} else {
+		fmt.Println("\033[32mPASS!!\033[0m\n")
+	}
+}
+
+func BitArrayToString2(output, learning bitarray.BitArray, vectorLen int) string {
+	delta := output.And(learning)
+	nums := delta.ToNums()
+	s := ""
+	for i := 0; i < vectorLen; i++ {
+		if cs.InArray(i, nums) {
+			s += "\033[32m1\033[0m"
+		} else {
+			s += "0"
+		}
+	}
+	return s
 }
 
 func getRandomCode(bitPerWord, capacity int) bitarray.BitArray {

@@ -35,19 +35,19 @@ type Cluster struct {
 	ActivationPartialCounter int
 	ErrorFullCounter         int
 	ErrorPartialCounter      int
-	Weights                  map[int]float32
-	HistoryMemory            []History
-	LearnCounter             int
-	inputLen                 uint64
+	/*Weights                  map[int]float32*/
+	HistoryMemory []History
+	LearnCounter  int
+	inputLen      uint64
 }
 
 func NewCluster(inputBitSet bitarray.BitArray, inputLen uint64) *Cluster {
 	return &Cluster{
 		Status:          ClusterTmp,
 		ActivationState: ClusterStateNon,
-		Weights:         make(map[int]float32),
-		inputLen:        inputLen,
-		inputBitSet:     inputBitSet,
+		/*Weights:         make(map[int]float32),*/
+		inputLen:    inputLen,
+		inputBitSet: inputBitSet,
 	}
 }
 
@@ -94,38 +94,39 @@ func (c *Cluster) SetNewBits(nums []uint64) {
 	c.inputBitSet = a
 }
 
-func (c *Cluster) BitActivationStatistic() ([]float32, []uint64) {
+func (c *Cluster) BitActivationStatistic() (map[int]float32) {
 	var max float32 = 0
-	//var a int = 0
-	var a float32 = 0
+	var a int = 0
+	//var a float32 = 0
 
 	activeBits := c.inputBitSet.ToNums()
 	clusterLength := len(activeBits)
-	f := make([]float32, clusterLength)
+	f := make(map[int]float32, clusterLength)
 	nu := 1 / float32(clusterLength)
 
-	for i := range f {
-		f[i] = 1.0
+	for _, num := range activeBits {
+		f[int(num)] = 1.0
 	}
 
 	for j := 0; j < 2; j++ {
-		for _, v := range c.HistoryMemory {
+		for _, item := range c.HistoryMemory {
 			a = 0
 
-			for l, n := range activeBits {
-				if inArray(int(n), v.InputBits) {
-					//a += int(f[l])
-					a += f[l]
+			for _, n := range activeBits {
+				if InArray(int(n), item.InputBits) {
+					a += int(f[int(n)])
+					//a += f[int(n)]
 				}
 			}
 
-			for l, n := range activeBits {
-				if inArray(int(n), v.InputBits) {
+			for _, n := range activeBits {
+				if InArray(int(n), item.InputBits) {
 					fl := float32(a) * nu
-					f[l] += fl
+					f[int(n)] += fl
 				}
 			}
 
+			max = 0
 			for _, e := range f {
 				if e > max {
 					max = e
@@ -138,5 +139,5 @@ func (c *Cluster) BitActivationStatistic() ([]float32, []uint64) {
 		}
 		nu = nu * 0.8
 	}
-	return f, activeBits
+	return f
 }

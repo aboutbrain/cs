@@ -3,23 +3,26 @@ package cs
 import "github.com/golang-collections/go-datastructures/bitarray"
 
 type Point struct {
-	id              int
-	inputVectorSize int
-	bitsPerInput    int
-	receptorSet     bitarray.BitArray
-	Memory          []Cluster
-	potential       int
-	OutputBit       int
+	id               int
+	inputVectorSize  int
+	bitsPerInput     int
+	receptorSet      bitarray.BitArray
+	Memory           []Cluster
+	potential        int
+	outputVectorSize int
+	OutputBit        int
 }
 
-func NewPoint(id, inputVectorSize int, bitsPerInput uint64) *Point {
+func NewPoint(id, inputVectorSize int, bitsPerInput, outputVectorSize int) *Point {
 	p := &Point{
-		id:              id,
-		inputVectorSize: inputVectorSize,
-		bitsPerInput:    int(bitsPerInput),
-		receptorSet:     bitarray.NewBitArray(uint64(inputVectorSize)),
+		id:               id,
+		inputVectorSize:  inputVectorSize,
+		bitsPerInput:     int(bitsPerInput),
+		outputVectorSize: outputVectorSize,
+		receptorSet:      bitarray.NewBitArray(uint64(inputVectorSize)),
 	}
 	p.setReceptors()
+	p.setOutBit()
 	return p
 }
 
@@ -42,9 +45,19 @@ func (p *Point) DeleteCluster(clusterId int) *Point {
 
 func (p *Point) setReceptors() {
 	for i := 0; i < p.bitsPerInput; i++ {
-		bit := Random(0, p.inputVectorSize)
-		p.receptorSet.SetBit(uint64(bit))
+	rnd:
+		bitNumber := Random(0, p.inputVectorSize-1)
+		if a, _ := p.receptorSet.GetBit(uint64(bitNumber)); a != true {
+			p.receptorSet.SetBit(uint64(bitNumber))
+		} else {
+			goto rnd
+		}
 	}
+}
+
+func (p *Point) setOutBit() {
+	outBitNum := Random(0, p.outputVectorSize-1)
+	p.OutputBit = outBitNum
 }
 
 func (p *Point) GetReceptors() bitarray.BitArray {

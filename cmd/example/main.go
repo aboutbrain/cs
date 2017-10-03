@@ -22,10 +22,10 @@ var _ = fmt.Printf // For debugging; delete when done.
 const (
 	InputVectorSize            = 128
 	OutputVectorSize           = 128
-	ContextSize                = 10
-	CombinatorialSpaceSize     = 60000
+	ContextSize                = 6
+	CombinatorialSpaceSize     = 5000
 	ReceptorsPerPoint          = 32
-	ClusterThreshold           = 6
+	ClusterThreshold           = 5
 	ClusterActivationThreshold = 4
 	CharacterBits              = 8
 	PointMemoryLimit           = 100
@@ -110,16 +110,16 @@ func main() {
 			nVector := learningCode.Equals(outputVector)
 
 			if day == true && !nVector {
-				s := "День"
+				s := "Day"
 				if !nVector {
-					s += " - учим!"
+					s += " - learning!"
 					mc.Learn(day)
 				}
 				fmt.Println(s)
 			} else {
-				s := "Ночь"
+				s := "Night"
 				if nVector {
-					s += " - выучено!"
+					s += " - learned!"
 				}
 				fmt.Println(s)
 			}
@@ -131,7 +131,7 @@ func main() {
 			total, permanent1, permanent2 := comSpace.ClustersCounters()
 
 			showVectors(sourceCode, outputVector, learningCode, nVector)
-			fmt.Printf("Clusters: %d, Permanent1: %d, Permanent2: %d\n", total, permanent1, permanent2)
+			fmt.Printf("Clusters: %d, Permanent1: %d, Permanent2: %d\n\n", total, permanent1, permanent2)
 
 			comSpace.InternalTime++
 			t++
@@ -147,9 +147,9 @@ func showVectors(source, output, learning bitarray.BitArray, nVector bool) {
 	fmt.Printf("DeltaVector:   %s\n", BitArrayToString2(output, learning, OutputVectorSize))
 
 	if !nVector {
-		fmt.Println("\033[31mFAIL!!\033[0m\n")
+		fmt.Println("\033[31mFAIL!!\033[0m")
 	} else {
-		fmt.Println("\033[32mPASS!!\033[0m\n")
+		fmt.Println("\033[32mPASS!!\033[0m")
 	}
 }
 

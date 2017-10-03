@@ -30,7 +30,7 @@ func NewMiniColumn(clusterThreshold, clusterActivationThreshold, memoryLimit int
 		clusterThreshold:           clusterThreshold,
 		clusterActivationThreshold: clusterActivationThreshold,
 		memoryLimit:                memoryLimit,
-		level:                      2,
+		level:                      1,
 		inputVectorLen:             inputVectorLen,
 		outputVectorLen:            outputVectorLen,
 		outputVector:               bitarray.NewBitArray(outputVectorLen),
@@ -64,15 +64,17 @@ func (mc *MiniColumn) Calculate() bitarray.BitArray {
 	mc.activateClusters()
 	//mc.inputVector = inputVectorSave
 	mc.makeOutVector()
+	mc.modifyClusters()
+	mc.consolidateMemory()
 	return mc.outputVector
 }
 
 func (mc *MiniColumn) Learn(day bool) {
 	if day {
 		mc.addNewClusters()
+		//mc.activateClusters()
 	}
-	mc.modifyClusters()
-	mc.consolidateMemory()
+
 }
 
 func (mc *MiniColumn) modifyClusters() {
@@ -125,7 +127,7 @@ func (mc *MiniColumn) consolidateMemory() {
 			j := clusterId - deleted
 			if cluster.ActivationFullCounter > 10 {
 				errorFull := float32(cluster.ErrorFullCounter) / float32(cluster.ActivationFullCounter)
-				if errorFull > 0.05 {
+				if errorFull > 0.01 {
 					mc.cs.DeleteCluster(&point, j)
 					deleted++
 					continue
@@ -202,7 +204,7 @@ func (mc *MiniColumn) activateClusters() {
 		point.SetPotential(pointPotential)
 		mc.cs.Points[pointId] = point
 	}
-	fmt.Printf("Clusters: Fully: %d, Partly: %d\n", clustersFullyActivated, clustersPartialActivated)
+	fmt.Printf("ActivatedClusters: Fully: %d, Partly: %d\n", clustersFullyActivated, clustersPartialActivated)
 	/*for i, v := range stat {
 		fmt.Printf("Clusters: %d, Points: %d\n", i, v)
 	}*/

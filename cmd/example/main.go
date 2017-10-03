@@ -34,7 +34,7 @@ const (
 func main() {
 	rand.Seed(time.Now().Unix())
 
-	b, err := ioutil.ReadFile("TheOldManAndTheSea.txt") // just pass the file name
+	b, err := ioutil.ReadFile("./testdata/TheOldManAndTheSea.txt") // just pass the file name
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -92,26 +92,36 @@ func main() {
 			after := strings.Repeat("_", ContextSize-len(textFragment))
 			textFragment += after
 
-			fmt.Printf("i: %d, InputText  : \"%s\"\n", i*1000+j, textFragment)
 			sourceCode := text.GetTextFragmentCode(textFragment, codes)
+			inputBits := len(sourceCode.ToNums())
+			fmt.Printf("i: %d, InputText  : \"%s\", Bit: %d\n", i*1000+j, textFragment, inputBits)
 
-			targetText := txt5 + strings.Repeat("_", ContextSize - l)
+			targetText := txt5 + strings.Repeat("_", ContextSize-l)
 			learningCode := text.GetTextFragmentCode(targetText, codes)
-			fmt.Printf("i: %d, TargetText : \"%s\"\n", i*1000+j, targetText)
+			lerningBits := len(learningCode.ToNums())
+			fmt.Printf("i: %d, TargetText : \"%s\", Bit: %d\n", i*1000+j, targetText, lerningBits)
 			//learningCode := wordCodeMap[word][0]
 
 			mc.SetInputVector(sourceCode)
 			mc.SetLearningVector(learningCode)
 
-			mc.Next()
-			outputVector := mc.OutVector()
+			outputVector := mc.Calculate()
+
 			nVector := learningCode.Equals(outputVector)
 
 			if day == true && !nVector {
-				mc.AddNewClusters()
-				fmt.Println("День")
+				s := "День"
+				if !nVector {
+					s += " - учим!"
+					mc.Learn(day)
+				}
+				fmt.Println(s)
 			} else {
-				fmt.Println("Ночь")
+				s := "Ночь"
+				if nVector {
+					s += " - выучено!"
+				}
+				fmt.Println(s)
 			}
 			if t == 1000 {
 				t = 0
@@ -120,16 +130,13 @@ func main() {
 
 			total, permanent1, permanent2 := comSpace.ClustersCounters()
 
-			fmt.Printf("Clusters: %d, Permanent1: %d, Permanent2: %d\n", total, permanent1, permanent2)
 			showVectors(sourceCode, outputVector, learningCode, nVector)
+			fmt.Printf("Clusters: %d, Permanent1: %d, Permanent2: %d\n", total, permanent1, permanent2)
 
 			comSpace.InternalTime++
 			t++
 		}
 	}
-
-	/*point := comSpace.Points[5]
-	fmt.Printf("%#v\n", point)*/
 }
 
 func showVectors(source, output, learning bitarray.BitArray, nVector bool) {

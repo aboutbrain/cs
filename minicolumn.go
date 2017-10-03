@@ -30,7 +30,7 @@ func NewMiniColumn(clusterThreshold, clusterActivationThreshold, memoryLimit int
 		clusterThreshold:           clusterThreshold,
 		clusterActivationThreshold: clusterActivationThreshold,
 		memoryLimit:                memoryLimit,
-		level:                      3,
+		level:                      2,
 		inputVectorLen:             inputVectorLen,
 		outputVectorLen:            outputVectorLen,
 		outputVector:               bitarray.NewBitArray(outputVectorLen),
@@ -50,7 +50,7 @@ func (mc *MiniColumn) SetLearningVector(learningVector bitarray.BitArray) {
 	mc.learningVector = learningVector
 }
 
-func (mc *MiniColumn) Next() {
+func (mc *MiniColumn) Calculate() bitarray.BitArray {
 	/*inputVectorSave := bitarray.NewBitArray(mc.inputVectorLen - 1)
 	inputVectorSave = inputVectorSave.Or(mc.inputVector)
 	// Add input noise
@@ -61,14 +61,21 @@ func (mc *MiniColumn) Next() {
 	if inputVectorSave.Equals(mc.inputVector) {
 		fmt.Println("\033[33mШУМ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\033[0m")
 	}*/
-	mc.ActivateClusters()
+	mc.activateClusters()
 	//mc.inputVector = inputVectorSave
-	mc.MakeOutVector()
-	mc.ModifyClusters()
-	mc.ConsolidateMemory()
+	mc.makeOutVector()
+	return mc.outputVector
 }
 
-func (mc *MiniColumn) ModifyClusters() {
+func (mc *MiniColumn) Learn(day bool) {
+	if day {
+		mc.addNewClusters()
+	}
+	mc.modifyClusters()
+	mc.consolidateMemory()
+}
+
+func (mc *MiniColumn) modifyClusters() {
 	clusters := 0
 	for pointId, point := range mc.cs.Points {
 		deleted := 0
@@ -111,7 +118,7 @@ func (mc *MiniColumn) ModifyClusters() {
 	//fmt.Printf("\nClustersCount: %d\n", clusters)
 }
 
-func (mc *MiniColumn) ConsolidateMemory() {
+func (mc *MiniColumn) consolidateMemory() {
 	for pointId, point := range mc.cs.Points {
 		deleted := 0
 		for clusterId, cluster := range point.Memory {
@@ -151,7 +158,7 @@ func (mc *MiniColumn) ConsolidateMemory() {
 	}
 }
 
-func (mc *MiniColumn) ActivateClusters() {
+func (mc *MiniColumn) activateClusters() {
 	stat := make(map[int]int)
 	clustersFullyActivated := 0
 	clustersPartialActivated := 0
@@ -201,7 +208,7 @@ func (mc *MiniColumn) ActivateClusters() {
 	}*/
 }
 
-func (mc *MiniColumn) MakeOutVector() {
+func (mc *MiniColumn) makeOutVector() {
 	mc.outputVector.Reset()
 	for i, currentOutBitPointsMap := range mc.cs.outBitToPointsMap {
 		p := 0
@@ -218,7 +225,7 @@ func (mc *MiniColumn) OutVector() bitarray.BitArray {
 	return mc.outputVector
 }
 
-func (mc *MiniColumn) AddNewClusters() {
+func (mc *MiniColumn) addNewClusters() {
 	for pointId, point := range mc.cs.Points {
 
 		receptors := point.GetReceptors()

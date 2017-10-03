@@ -73,22 +73,19 @@ func main() {
 	day := true
 	t := 0
 
-	wordLenMax := 9
+	s := ""
+	for _, word := range words {
+		s += word + "_"
+	}
+
 	for i := 0; i < 10; i++ {
 		for j := 0; j < 10000; j++ {
-			word := strings.ToLower(words[j])
-			l := len(word)
-			if l >= wordLenMax {
-				l = wordLenMax
-			}
-
-			txt5 := word[:l]
-			//wordContextSize := ContextSize - l
 			context := 1
 
-			//context := 0
-			textFragment := ""//strings.Repeat("_", context)
-			textFragment += txt5
+			txt := strings.ToLower(s[j : j+9])
+
+			textFragment := "" //strings.Repeat("_", context)
+			textFragment += txt
 			after := strings.Repeat("_", ContextSize-len(textFragment))
 			textFragment += after
 
@@ -96,7 +93,7 @@ func main() {
 			inputBits := len(sourceCode.ToNums())
 			fmt.Printf("i: %d, InputText  : \"%s\", Bit: %d\n", i*1000+j, textFragment, inputBits)
 
-			targetText := strings.Repeat("_", context) + txt5
+			targetText := strings.Repeat("_", context) + txt
 			targetText += strings.Repeat("_", ContextSize-len(targetText))
 			learningCode := text.GetTextFragmentCode(targetText, codes)
 			learningBits := len(learningCode.ToNums())
@@ -132,7 +129,7 @@ func main() {
 			total, permanent1, permanent2 := comSpace.ClustersCounters()
 
 			showVectors(sourceCode, outputVector, learningCode, nVector)
-			fmt.Printf("Clusters: %d, Permanent1: %d, Permanent2: %d\n\n", total, permanent1, permanent2)
+			fmt.Printf("Clusters: %d, Permanent-1: %d, Permanent-2: %d\n\n", total, permanent1, permanent2)
 
 			comSpace.InternalTime++
 			t++

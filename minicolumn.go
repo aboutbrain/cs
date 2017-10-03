@@ -127,7 +127,7 @@ func (mc *MiniColumn) consolidateMemory() {
 			j := clusterId - deleted
 			if cluster.ActivationFullCounter > 10 {
 				errorFull := float32(cluster.ErrorFullCounter) / float32(cluster.ActivationFullCounter)
-				if errorFull > 0.01 {
+				if errorFull > 0.03 {
 					mc.cs.DeleteCluster(&point, j)
 					deleted++
 					continue

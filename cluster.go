@@ -96,8 +96,8 @@ func (c *Cluster) SetNewBits(nums []uint64) {
 
 func (c *Cluster) BitActivationStatistic() (map[int]float32) {
 	var max float32 = 0
-	var a int = 0
-	//var a float32 = 0
+	//var a int = 0
+	var a float32 = 0
 
 	activeBits := c.inputBitSet.ToNums()
 	clusterLength := len(activeBits)
@@ -114,8 +114,8 @@ func (c *Cluster) BitActivationStatistic() (map[int]float32) {
 
 			for _, n := range activeBits {
 				if InArray(int(n), item.InputBits) {
-					a += int(f[int(n)])
-					//a += f[int(n)]
+					//a += int(f[int(n)])
+					a += f[int(n)]
 				}
 			}
 

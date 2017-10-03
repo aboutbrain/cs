@@ -20,12 +20,12 @@ import (
 var _ = fmt.Printf // For debugging; delete when done.
 
 const (
-	InputVectorSize            = 128
-	OutputVectorSize           = 128
-	ContextSize                = 6
-	CombinatorialSpaceSize     = 5000
+	InputVectorSize            = 256
+	OutputVectorSize           = 256
+	ContextSize                = 10
+	CombinatorialSpaceSize     = 60000
 	ReceptorsPerPoint          = 32
-	ClusterThreshold           = 5
+	ClusterThreshold           = 6
 	ClusterActivationThreshold = 4
 	CharacterBits              = 8
 	PointMemoryLimit           = 100
@@ -73,21 +73,21 @@ func main() {
 	day := true
 	t := 0
 
-	//fragmentLength := 5
-	for i := 0; i < 100; i++ {
-		for j := 0; j < 1000; j++ {
+	wordLenMax := 9
+	for i := 0; i < 10; i++ {
+		for j := 0; j < 10000; j++ {
 			word := strings.ToLower(words[j])
 			l := len(word)
-			if l >= 5 {
-				l = 5
+			if l >= wordLenMax {
+				l = wordLenMax
 			}
 
 			txt5 := word[:l]
-			wordContextSize := ContextSize - l
-			context := cs.Random(0, wordContextSize)
+			//wordContextSize := ContextSize - l
+			context := 1
 
 			//context := 0
-			textFragment := strings.Repeat("_", context)
+			textFragment := ""//strings.Repeat("_", context)
 			textFragment += txt5
 			after := strings.Repeat("_", ContextSize-len(textFragment))
 			textFragment += after
@@ -96,10 +96,11 @@ func main() {
 			inputBits := len(sourceCode.ToNums())
 			fmt.Printf("i: %d, InputText  : \"%s\", Bit: %d\n", i*1000+j, textFragment, inputBits)
 
-			targetText := txt5 + strings.Repeat("_", ContextSize-l)
+			targetText := strings.Repeat("_", context) + txt5
+			targetText += strings.Repeat("_", ContextSize-len(targetText))
 			learningCode := text.GetTextFragmentCode(targetText, codes)
-			lerningBits := len(learningCode.ToNums())
-			fmt.Printf("i: %d, TargetText : \"%s\", Bit: %d\n", i*1000+j, targetText, lerningBits)
+			learningBits := len(learningCode.ToNums())
+			fmt.Printf("i: %d, TargetText : \"%s\", Bit: %d\n", i*1000+j, targetText, learningBits)
 			//learningCode := wordCodeMap[word][0]
 
 			mc.SetInputVector(sourceCode)
@@ -109,7 +110,7 @@ func main() {
 
 			nVector := learningCode.Equals(outputVector)
 
-			if day == true && !nVector {
+			if day == true {
 				s := "Day"
 				if !nVector {
 					s += " - learning!"
@@ -123,7 +124,7 @@ func main() {
 				}
 				fmt.Println(s)
 			}
-			if t == 1000 {
+			if t == 500 {
 				t = 0
 				day = !day
 			}

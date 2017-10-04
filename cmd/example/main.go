@@ -12,7 +12,6 @@ import (
 	"github.com/aboutbrain/cs/bitarray"
 	"github.com/aboutbrain/cs/persist"
 	"github.com/aboutbrain/cs/text"
-	"github.com/pkg/profile"
 )
 
 var _ = fmt.Printf // For debugging; delete when done.
@@ -23,7 +22,7 @@ const (
 	ContextSize                = 10
 	CombinatorialSpaceSize     = 60000
 	ReceptorsPerPoint          = 24
-	ClusterThreshold           = 6
+	ClusterThreshold           = 7
 	ClusterActivationThreshold = 4
 	CharacterBits              = 8
 	PointMemoryLimit           = 100
@@ -31,7 +30,7 @@ const (
 
 func main() {
 	//запустит CPU-профайлер
-	defer profile.Start(profile.CPUProfile).Stop()
+	//defer profile.Start(profile.CPUProfile).Stop()
 	//rand.Seed(time.Now().Unix())
 
 	b, err := ioutil.ReadFile("./testdata/TheOldManAndTheSea.txt") // just pass the file name
@@ -78,8 +77,10 @@ func main() {
 		s += word + "_"
 	}
 
-	for i := 0; i < 1; i++ {
-		for j := 0; j < 200; j++ {
+	const Segment  = 500
+
+	for i := 0; i < 10; i++ {
+		for j := 0; j < Segment; j++ {
 			context := 1
 
 			txt := strings.ToLower(s[j : j+9])
@@ -91,13 +92,13 @@ func main() {
 
 			sourceCode := text.GetTextFragmentCode(textFragment, codes)
 			inputBits := len(sourceCode.ToNums())
-			fmt.Printf("i: %d, InputText  : \"%s\", Bit: %d\n", i*1000+j, textFragment, inputBits)
+			fmt.Printf("i: %d, InputText  : \"%s\", Bit: %d\n", i*Segment+j, textFragment, inputBits)
 
 			targetText := strings.Repeat("_", context) + txt
 			targetText += strings.Repeat("_", ContextSize-len(targetText))
 			learningCode := text.GetTextFragmentCode(targetText, codes)
 			learningBits := len(learningCode.ToNums())
-			fmt.Printf("i: %d, TargetText : \"%s\", Bit: %d\n", i*1000+j, targetText, learningBits)
+			fmt.Printf("i: %d, TargetText : \"%s\", Bit: %d\n", i*Segment+j, targetText, learningBits)
 			//learningCode := wordCodeMap[word][0]
 
 			mc.SetInputVector(sourceCode)
@@ -121,7 +122,7 @@ func main() {
 				}
 				fmt.Println(s)
 			}
-			if t == 500 {
+			if t == Segment {
 				t = 0
 				day = !day
 			}

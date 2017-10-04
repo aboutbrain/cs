@@ -30,7 +30,7 @@ func NewMiniColumn(clusterThreshold, clusterActivationThreshold, memoryLimit int
 		clusterThreshold:           clusterThreshold,
 		clusterActivationThreshold: clusterActivationThreshold,
 		memoryLimit:                memoryLimit,
-		level:                      1,
+		level:                      2,
 		inputVectorLen:             inputVectorLen,
 		outputVectorLen:            outputVectorLen,
 		outputVector:               bitarray.NewBitArray(uint64(outputVectorLen)),
@@ -132,7 +132,7 @@ func (mc *MiniColumn) consolidateMemory() {
 		deleted := 0
 		for clusterId, cluster := range point.Memory {
 			j := clusterId - deleted
-			if cluster.ActivationFullCounter > 10 {
+			if cluster.ActivationFullCounter > 20 {
 				errorFull := float32(cluster.ErrorFullCounter) / float32(cluster.ActivationFullCounter)
 				if errorFull > 0.05 {
 					mc.cs.DeleteCluster(&point, j)

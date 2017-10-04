@@ -35,20 +35,24 @@ type Cluster struct {
 	ActivationPartialCounter int
 	ErrorFullCounter         int
 	ErrorPartialCounter      int
-	/*Weights                  map[int]float32*/
-	HistoryMemory []History
-	LearnCounter  int
-	inputLen      uint8
+	Weights                  map[int]float32
+	HistoryMemory            []History
+	LearnCounter             int
+	inputLen                 int
 }
 
-func NewCluster(inputBitSet bitarray.BitArray, inputLen uint8) *Cluster {
+func NewCluster(inputBitSet bitarray.BitArray, inputLen int) *Cluster {
+	w := make(map[int]float32)
+	nums := inputBitSet.ToNums()
+	for _, v := range nums {
+		w[int(v)] = 1
+	}
 	return &Cluster{
 		Status:          ClusterTmp,
 		ActivationState: ClusterStateNon,
-		/*Weights:         make(map[int]float32),*/
-		inputLen:    inputLen,
-		inputBitSet: inputBitSet,
-		//HistoryMemory: make([]History, 0, 50),
+		Weights:         w,
+		inputLen:        inputLen,
+		inputBitSet:     inputBitSet,
 	}
 }
 
@@ -100,9 +104,42 @@ func (c *Cluster) SetNewBits(nums []uint64) {
 	c.inputBitSet = a
 }
 
-func (c *Cluster) BitActivationStatistic() (map[int]float32) {
+func (c *Cluster) BitStatisticNew(inputVector bitarray.BitArray) {
 	var max float32 = 0
-	//var a int = 0
+	var a float32 = 0
+	resultVector := c.inputBitSet.And(inputVector)
+	resultNums := resultVector.ToNums()
+	activeBits := c.inputBitSet.ToNums()
+	clusterLength := len(activeBits)
+	nu := 1 / float32(clusterLength)
+
+	for j := 0; j < 1; j++ {
+		a = 0
+
+		for _, n := range resultNums {
+			a += c.Weights[int(n)]
+		}
+
+		for _, n := range resultNums {
+			c.Weights[int(n)] += a * nu
+		}
+
+		max = 0
+		for _, e := range c.Weights {
+			if e > max {
+				max = e
+			}
+		}
+
+		for i := range c.Weights {
+			c.Weights[i] = c.Weights[i] / max
+		}
+		nu = nu * 0.8
+	}
+}
+
+func (c *Cluster) BitActivationStatistic() map[int]float32 {
+	var max float32 = 0
 	var a float32 = 0
 
 	activeBits := c.inputBitSet.ToNums()
@@ -114,20 +151,19 @@ func (c *Cluster) BitActivationStatistic() (map[int]float32) {
 		f[int(num)] = 1.0
 	}
 
-	for j := 0; j < 2; j++ {
+	for j := 0; j < 1; j++ {
 		for _, item := range c.HistoryMemory {
 			a = 0
 
 			for _, n := range activeBits {
 				if InArray8(int(n), item.InputBits) {
-					//a += int(f[int(n)])
 					a += f[int(n)]
 				}
 			}
 
 			for _, n := range activeBits {
 				if InArray8(int(n), item.InputBits) {
-					fl := float32(a) * nu
+					fl := a * nu
 					f[int(n)] += fl
 				}
 			}

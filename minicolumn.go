@@ -74,7 +74,6 @@ func (mc *MiniColumn) Learn(day bool) {
 		mc.addNewClusters()
 		//mc.activateClusters()
 	}
-
 }
 
 func (mc *MiniColumn) modifyClusters() {
@@ -101,6 +100,7 @@ func (mc *MiniColumn) modifyClusters() {
 						if _, ok := mc.cs.OutHashSet[pointId][hashNew]; !ok {
 							mc.cs.RemoveHash(pointId, hashOld)
 							mc.cs.SetHash(pointId, hashNew)
+							point.Memory[j] = cluster
 						} else {
 							mc.cs.DeleteCluster(&point, j)
 							deleted++
@@ -113,7 +113,7 @@ func (mc *MiniColumn) modifyClusters() {
 					}
 				}
 			}
-			point.Memory[j] = cluster
+			//point.Memory[j] = cluster
 		}
 		mc.cs.Points[pointId] = point
 	}
@@ -127,7 +127,7 @@ func (mc *MiniColumn) consolidateMemory() {
 			j := clusterId - deleted
 			if cluster.ActivationFullCounter > 25 {
 				errorFull := float32(cluster.ErrorFullCounter) / float32(cluster.ActivationFullCounter)
-				if errorFull > 0.03 {
+				if errorFull > 0.05 {
 					mc.cs.DeleteCluster(&point, j)
 					deleted++
 					continue
@@ -170,6 +170,7 @@ func (mc *MiniColumn) activateClusters() {
 		clusters := 0
 		for clusterId, cluster := range point.Memory {
 			clusters++
+			//cluster.BitStatisticNew(mc.inputVector)
 			potential, inputBits := cluster.GetCurrentPotential(mc.inputVector)
 			inputSize := cluster.GetInputSize()
 			active, _ := mc.learningVector.GetBit(uint64(point.GetOutputBit()))
@@ -191,6 +192,7 @@ func (mc *MiniColumn) activateClusters() {
 					cluster.ErrorPartialCounter++
 				} else {
 					if cluster.Status != ClusterPermanent2 {
+						cluster.BitStatisticNew(mc.inputVector)
 						cluster.SetHistory(inputBits, active)
 					}
 				}
@@ -240,7 +242,7 @@ func (mc *MiniColumn) addNewClusters() {
 		memorySize := len(point.Memory)
 
 		if receptorsActiveLen >= mc.clusterThreshold && active && memorySize < mc.memoryLimit {
-			cluster := NewCluster(receptorsActiveCount, uint8(mc.inputVectorLen))
+			cluster := NewCluster(receptorsActiveCount, mc.inputVectorLen)
 			cluster.startTime = mc.cs.InternalTime
 			hash := cluster.GetHash()
 			if !mc.cs.CheckOutHashSet(pointId, hash) {

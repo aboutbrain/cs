@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/aboutbrain/cs"
-	"github.com/golang-collections/go-datastructures/bitarray"
+	"github.com/aboutbrain/cs/bitarray"
 )
 
 const Alpha = "_ abcdefghijklmnopqrstuvwxyz.,*“”’?!-:�\n"

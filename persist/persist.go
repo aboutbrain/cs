@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 
 	"github.com/aboutbrain/cs/text"
-	"github.com/golang-collections/go-datastructures/bitarray"
+	"github.com/aboutbrain/cs/bitarray"
 )
 
 type MapOfBits map[int][]uint64

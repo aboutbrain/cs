@@ -3,7 +3,7 @@ package cs
 import (
 	"math/rand"
 
-	"github.com/golang-collections/go-datastructures/bitarray"
+	"github.com/aboutbrain/cs/bitarray"
 )
 
 func Random(min, max int) int {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/golang-collections/go-datastructures/bitarray"
+	"github.com/aboutbrain/cs/bitarray"
 )
 
 var _ = log.Printf // For debugging; delete when done.
@@ -84,7 +84,8 @@ func (mc *MiniColumn) modifyClusters() {
 			j := clusterId - deleted
 			clusters++
 			if cluster.Status != ClusterPermanent2 && (cluster.LearnCounter == 4 || cluster.LearnCounter == 16) {
-				f := cluster.BitActivationStatistic()
+				//f := cluster.BitActivationStatistic()
+				f := cluster.Weights
 				clusterBitsNew := []uint64{}
 				for i := range f {
 					if f[i] > 0.75 {
@@ -100,6 +101,12 @@ func (mc *MiniColumn) modifyClusters() {
 						if _, ok := mc.cs.OutHashSet[pointId][hashNew]; !ok {
 							mc.cs.RemoveHash(pointId, hashOld)
 							mc.cs.SetHash(pointId, hashNew)
+							w := make(map[int]float32)
+							for _, v := range clusterBitsNew {
+								w[int(v)] = f[int(v)]
+							}
+							cluster.Weights = w
+							cluster.clusterLength = clusterBitsNewLen
 							point.Memory[j] = cluster
 						} else {
 							mc.cs.DeleteCluster(&point, j)
@@ -125,7 +132,7 @@ func (mc *MiniColumn) consolidateMemory() {
 		deleted := 0
 		for clusterId, cluster := range point.Memory {
 			j := clusterId - deleted
-			if cluster.ActivationFullCounter > 25 {
+			if cluster.ActivationFullCounter > 10 {
 				errorFull := float32(cluster.ErrorFullCounter) / float32(cluster.ActivationFullCounter)
 				if errorFull > 0.05 {
 					mc.cs.DeleteCluster(&point, j)
@@ -170,11 +177,12 @@ func (mc *MiniColumn) activateClusters() {
 		clusters := 0
 		for clusterId, cluster := range point.Memory {
 			clusters++
-			//cluster.BitStatisticNew(mc.inputVector)
-			potential, inputBits := cluster.GetCurrentPotential(mc.inputVector)
+			result := cluster.inputBitSet.And(mc.inputVector)
+			nums := result.ToNums()
+			cluster.potential = len(nums)
 			inputSize := cluster.GetInputSize()
 			active, _ := mc.learningVector.GetBit(uint64(point.GetOutputBit()))
-			if potential == inputSize {
+			if cluster.potential == inputSize {
 				cluster.SetActivationStatus(ClusterStatusFull)
 				cluster.ActivationFullCounter++
 				clustersFullyActivated++
@@ -182,9 +190,9 @@ func (mc *MiniColumn) activateClusters() {
 					cluster.ErrorFullCounter++
 				}
 				if cluster.Status == ClusterPermanent2 {
-					pointPotential += potential - mc.clusterActivationThreshold + 1
+					pointPotential += cluster.potential - mc.clusterActivationThreshold + 1
 				}
-			} else if int(potential) >= mc.clusterActivationThreshold {
+			} else if int(cluster.potential) >= mc.clusterActivationThreshold {
 				clustersPartialActivated++
 				cluster.SetActivationStatus(ClusterStatePartial)
 				cluster.ActivationPartialCounter++
@@ -192,8 +200,8 @@ func (mc *MiniColumn) activateClusters() {
 					cluster.ErrorPartialCounter++
 				} else {
 					if cluster.Status != ClusterPermanent2 {
-						cluster.BitStatisticNew(mc.inputVector)
-						cluster.SetHistory(inputBits, active)
+						cluster.BitStatisticNew(nums)
+						//cluster.SetHistory(inputBits, active)
 					}
 				}
 				if cluster.Status != ClusterPermanent2 {

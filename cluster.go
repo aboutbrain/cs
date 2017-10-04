@@ -3,7 +3,7 @@ package cs
 import (
 	"strconv"
 
-	"github.com/golang-collections/go-datastructures/bitarray"
+	"github.com/aboutbrain/cs/bitarray"
 )
 
 const (
@@ -30,15 +30,17 @@ type Cluster struct {
 	startTime                int
 	inputBitSet              bitarray.BitArray
 	ActivationState          uint8
-	potential                uint8
+	potential                int
 	ActivationFullCounter    int
 	ActivationPartialCounter int
 	ErrorFullCounter         int
 	ErrorPartialCounter      int
 	Weights                  map[int]float32
-	HistoryMemory            []History
+	//HistoryMemory            []History
 	LearnCounter             int
 	inputLen                 int
+	clusterLength            int
+	//inputBitNums             []uint8
 }
 
 func NewCluster(inputBitSet bitarray.BitArray, inputLen int) *Cluster {
@@ -53,23 +55,19 @@ func NewCluster(inputBitSet bitarray.BitArray, inputLen int) *Cluster {
 		Weights:         w,
 		inputLen:        inputLen,
 		inputBitSet:     inputBitSet,
+		clusterLength:   len(nums),
 	}
 }
 
-func (c *Cluster) GetCurrentPotential(inputVector bitarray.BitArray) (int, []uint8) {
+/*func (c *Cluster) GetCurrentPotential(inputVector bitarray.BitArray) int {
 	inputBits := inputVector.And(c.inputBitSet).ToNums()
-	l := len(inputBits)
-	c.potential = uint8(l)
-	arr := make([]uint8, l, l)
-	for i, v := range inputBits {
-		arr[i] = uint8(v)
-	}
-	return int(c.potential), arr
-}
+	c.potential = len(inputBits)
+	return c.potential
+}*/
 
-func (c *Cluster) SetHistory(inputBits InputBits, active bool) {
+/*func (c *Cluster) SetHistory(inputBits InputBits, active bool) {
 	c.HistoryMemory = append(c.HistoryMemory, History{InputBits: inputBits, OutputBit: active})
-}
+}*/
 
 func (c *Cluster) SetStatus(status uint8) {
 	c.Status = status
@@ -84,14 +82,13 @@ func (c *Cluster) SetActivationStatus(status uint8) {
 }
 
 func (c *Cluster) GetInputSize() int {
-	return len(c.inputBitSet.ToNums())
+	return c.clusterLength
 }
 
 func (c *Cluster) GetHash() string {
-	bitNums := c.inputBitSet.ToNums()
 	hash := ""
-	for _, v := range bitNums {
-		hash += "." + strconv.Itoa(int(v))
+	for i := range c.Weights {
+		hash += "." + strconv.Itoa(i)
 	}
 	return hash
 }
@@ -104,14 +101,10 @@ func (c *Cluster) SetNewBits(nums []uint64) {
 	c.inputBitSet = a
 }
 
-func (c *Cluster) BitStatisticNew(inputVector bitarray.BitArray) {
+func (c *Cluster) BitStatisticNew(resultNums []uint64) {
 	var max float32 = 0
 	var a float32 = 0
-	resultVector := c.inputBitSet.And(inputVector)
-	resultNums := resultVector.ToNums()
-	activeBits := c.inputBitSet.ToNums()
-	clusterLength := len(activeBits)
-	nu := 1 / float32(clusterLength)
+	nu := 1 / float32(c.clusterLength)
 
 	for j := 0; j < 1; j++ {
 		a = 0
@@ -134,11 +127,11 @@ func (c *Cluster) BitStatisticNew(inputVector bitarray.BitArray) {
 		for i := range c.Weights {
 			c.Weights[i] = c.Weights[i] / max
 		}
-		nu = nu * 0.8
+		//nu = nu * 0.8
 	}
 }
 
-func (c *Cluster) BitActivationStatistic() map[int]float32 {
+/*func (c *Cluster) BitActivationStatistic() map[int]float32 {
 	var max float32 = 0
 	var a float32 = 0
 
@@ -182,4 +175,4 @@ func (c *Cluster) BitActivationStatistic() map[int]float32 {
 		nu = nu * 0.8
 	}
 	return f
-}
+}*/

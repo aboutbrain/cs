@@ -1,6 +1,6 @@
 package cs
 
-import "github.com/golang-collections/go-datastructures/bitarray"
+import "github.com/aboutbrain/cs/bitarray"
 
 type Point struct {
 	id               int

@@ -8,13 +8,11 @@ import (
 
 	"io/ioutil"
 
-	"math/rand"
-	"time"
-
 	"github.com/aboutbrain/cs"
+	"github.com/aboutbrain/cs/bitarray"
 	"github.com/aboutbrain/cs/persist"
 	"github.com/aboutbrain/cs/text"
-	"github.com/golang-collections/go-datastructures/bitarray"
+	"github.com/pkg/profile"
 )
 
 var _ = fmt.Printf // For debugging; delete when done.
@@ -32,7 +30,9 @@ const (
 )
 
 func main() {
-	rand.Seed(time.Now().Unix())
+	//запустит CPU-профайлер
+	defer profile.Start(profile.CPUProfile).Stop()
+	//rand.Seed(time.Now().Unix())
 
 	b, err := ioutil.ReadFile("./testdata/TheOldManAndTheSea.txt") // just pass the file name
 	if err != nil {
@@ -78,8 +78,8 @@ func main() {
 		s += word + "_"
 	}
 
-	for i := 0; i < 10; i++ {
-		for j := 0; j < 10000; j++ {
+	for i := 0; i < 1; i++ {
+		for j := 0; j < 200; j++ {
 			context := 1
 
 			txt := strings.ToLower(s[j : j+9])

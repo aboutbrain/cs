@@ -19,18 +19,18 @@ const (
 	ClusterStatusFull
 )
 
-type InputBits []uint64
+type InputBits []uint8
 type History struct {
 	InputBits
 	OutputBit bool
 }
 
 type Cluster struct {
-	Status                   int
+	Status                   uint8
 	startTime                int
 	inputBitSet              bitarray.BitArray
-	ActivationState          int
-	potential                int
+	ActivationState          uint8
+	potential                uint8
 	ActivationFullCounter    int
 	ActivationPartialCounter int
 	ErrorFullCounter         int
@@ -38,30 +38,36 @@ type Cluster struct {
 	/*Weights                  map[int]float32*/
 	HistoryMemory []History
 	LearnCounter  int
-	inputLen      uint64
+	inputLen      uint8
 }
 
-func NewCluster(inputBitSet bitarray.BitArray, inputLen uint64) *Cluster {
+func NewCluster(inputBitSet bitarray.BitArray, inputLen uint8) *Cluster {
 	return &Cluster{
 		Status:          ClusterTmp,
 		ActivationState: ClusterStateNon,
 		/*Weights:         make(map[int]float32),*/
 		inputLen:    inputLen,
 		inputBitSet: inputBitSet,
+		//HistoryMemory: make([]History, 0, 50),
 	}
 }
 
-func (c *Cluster) GetCurrentPotential(inputVector bitarray.BitArray) (int, InputBits) {
+func (c *Cluster) GetCurrentPotential(inputVector bitarray.BitArray) (int, []uint8) {
 	inputBits := inputVector.And(c.inputBitSet).ToNums()
-	c.potential = len(inputBits)
-	return c.potential, inputBits
+	l := len(inputBits)
+	c.potential = uint8(l)
+	arr := make([]uint8, l, l)
+	for i, v := range inputBits {
+		arr[i] = uint8(v)
+	}
+	return int(c.potential), arr
 }
 
 func (c *Cluster) SetHistory(inputBits InputBits, active bool) {
 	c.HistoryMemory = append(c.HistoryMemory, History{InputBits: inputBits, OutputBit: active})
 }
 
-func (c *Cluster) SetStatus(status int) {
+func (c *Cluster) SetStatus(status uint8) {
 	c.Status = status
 }
 
@@ -69,7 +75,7 @@ func (c *Cluster) LearnCounterIncrease() {
 	c.LearnCounter++
 }
 
-func (c *Cluster) SetActivationStatus(status int) {
+func (c *Cluster) SetActivationStatus(status uint8) {
 	c.ActivationState = status
 }
 
@@ -87,7 +93,7 @@ func (c *Cluster) GetHash() string {
 }
 
 func (c *Cluster) SetNewBits(nums []uint64) {
-	a := bitarray.NewBitArray(c.inputLen)
+	a := bitarray.NewBitArray(uint64(c.inputLen))
 	for _, num := range nums {
 		a.SetBit(num)
 	}
@@ -113,14 +119,14 @@ func (c *Cluster) BitActivationStatistic() (map[int]float32) {
 			a = 0
 
 			for _, n := range activeBits {
-				if InArray(int(n), item.InputBits) {
+				if InArray8(int(n), item.InputBits) {
 					//a += int(f[int(n)])
 					a += f[int(n)]
 				}
 			}
 
 			for _, n := range activeBits {
-				if InArray(int(n), item.InputBits) {
+				if InArray8(int(n), item.InputBits) {
 					fl := float32(a) * nu
 					f[int(n)] += fl
 				}

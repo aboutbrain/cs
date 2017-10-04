@@ -10,7 +10,7 @@ func Random(min, max int) int {
 	return rand.Intn(max-min) + min
 }
 
-func InArray(num int, arr []uint64) bool {
+func InArray8(num int, arr []uint8) bool {
 	for _, v := range arr {
 		if int(v) == num {
 			return true
@@ -19,11 +19,21 @@ func InArray(num int, arr []uint64) bool {
 	return false
 }
 
+func InArray64(num int, arr []uint64) bool {
+	for _, v := range arr {
+		if int(v) == num {
+			return true
+		}
+	}
+	return false
+}
+
+
 func BitArrayToString(ba bitarray.BitArray, vectorLen int) string {
 	nums := ba.ToNums()
 	s := ""
 	for i := 0; i < vectorLen; i++ {
-		if InArray(i, nums) {
+		if InArray64(i, nums) {
 			s += "1"
 		} else {
 			s += "0"

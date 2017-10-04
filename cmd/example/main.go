@@ -24,7 +24,7 @@ const (
 	OutputVectorSize           = 256
 	ContextSize                = 10
 	CombinatorialSpaceSize     = 60000
-	ReceptorsPerPoint          = 32
+	ReceptorsPerPoint          = 24
 	ClusterThreshold           = 6
 	ClusterActivationThreshold = 4
 	CharacterBits              = 8
@@ -156,7 +156,7 @@ func BitArrayToString2(output, learning bitarray.BitArray, vectorLen int) string
 	nums := delta.ToNums()
 	s := ""
 	for i := 0; i < vectorLen; i++ {
-		if cs.InArray(i, nums) {
+		if cs.InArray64(i, nums) {
 			s += "\033[32m1\033[0m"
 		} else {
 			s += "0"

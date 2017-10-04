@@ -12,10 +12,10 @@ var _ = fmt.Printf // For debugging; delete when done.
 
 type MiniColumn struct {
 	inputVector                bitarray.BitArray
-	inputVectorLen             uint64
+	inputVectorLen             int
 	inputLen                   int
 	outputVector               bitarray.BitArray
-	outputVectorLen            uint64
+	outputVectorLen            int
 	learningVector             bitarray.BitArray
 	cs                         *CombinatorialSpace
 	clusterThreshold           int
@@ -25,7 +25,7 @@ type MiniColumn struct {
 	level                      int
 }
 
-func NewMiniColumn(clusterThreshold, clusterActivationThreshold, memoryLimit int, inputVectorLen, outputVectorLen uint64) *MiniColumn {
+func NewMiniColumn(clusterThreshold, clusterActivationThreshold, memoryLimit int, inputVectorLen, outputVectorLen int) *MiniColumn {
 	return &MiniColumn{
 		clusterThreshold:           clusterThreshold,
 		clusterActivationThreshold: clusterActivationThreshold,
@@ -33,7 +33,7 @@ func NewMiniColumn(clusterThreshold, clusterActivationThreshold, memoryLimit int
 		level:                      1,
 		inputVectorLen:             inputVectorLen,
 		outputVectorLen:            outputVectorLen,
-		outputVector:               bitarray.NewBitArray(outputVectorLen),
+		outputVector:               bitarray.NewBitArray(uint64(outputVectorLen)),
 	}
 }
 
@@ -125,7 +125,7 @@ func (mc *MiniColumn) consolidateMemory() {
 		deleted := 0
 		for clusterId, cluster := range point.Memory {
 			j := clusterId - deleted
-			if cluster.ActivationFullCounter > 10 {
+			if cluster.ActivationFullCounter > 25 {
 				errorFull := float32(cluster.ErrorFullCounter) / float32(cluster.ActivationFullCounter)
 				if errorFull > 0.03 {
 					mc.cs.DeleteCluster(&point, j)
@@ -183,7 +183,7 @@ func (mc *MiniColumn) activateClusters() {
 				if cluster.Status == ClusterPermanent2 {
 					pointPotential += potential - mc.clusterActivationThreshold + 1
 				}
-			} else if potential >= mc.clusterActivationThreshold {
+			} else if int(potential) >= mc.clusterActivationThreshold {
 				clustersPartialActivated++
 				cluster.SetActivationStatus(ClusterStatePartial)
 				cluster.ActivationPartialCounter++
@@ -201,7 +201,7 @@ func (mc *MiniColumn) activateClusters() {
 			point.Memory[clusterId] = cluster
 		}
 		stat[clusters]++
-		point.SetPotential(pointPotential)
+		point.SetPotential(int(pointPotential))
 		mc.cs.Points[pointId] = point
 	}
 	fmt.Printf("ActivatedClusters: Fully: %d, Partly: %d\n", clustersFullyActivated, clustersPartialActivated)
@@ -217,7 +217,7 @@ func (mc *MiniColumn) makeOutVector() {
 		for _, pointId := range currentOutBitPointsMap {
 			p += mc.cs.Points[pointId].GetPotential()
 		}
-		if p >= mc.level {
+		if p >= int(mc.level) {
 			mc.outputVector.SetBit(uint64(i))
 		}
 	}
@@ -240,7 +240,7 @@ func (mc *MiniColumn) addNewClusters() {
 		memorySize := len(point.Memory)
 
 		if receptorsActiveLen >= mc.clusterThreshold && active && memorySize < mc.memoryLimit {
-			cluster := NewCluster(receptorsActiveCount, mc.inputVectorLen)
+			cluster := NewCluster(receptorsActiveCount, uint8(mc.inputVectorLen))
 			cluster.startTime = mc.cs.InternalTime
 			hash := cluster.GetHash()
 			if !mc.cs.CheckOutHashSet(pointId, hash) {

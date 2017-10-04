@@ -23,6 +23,7 @@ func NewCombinatorialSpace(size, inputCodeSize int, receptors uint64, outCode in
 		NumberOfBitInInputCode: inputCodeSize,
 		NumberOfReceptorsInPoint: receptors,
 		NumberOfBitInOutCode:     outCode,
+		Points: make([]Point, 60000, 60000),
 	}
 	space.outBitToPointsMap = make(map[int][]int)
 	space.createPoints()
@@ -36,7 +37,8 @@ func NewCombinatorialSpace(size, inputCodeSize int, receptors uint64, outCode in
 func (cs *CombinatorialSpace) createPoints() {
 	for i := 0; i < cs.NumberOfPoints; i++ {
 		point := NewPoint(i, cs.NumberOfBitInInputCode, int(cs.NumberOfReceptorsInPoint), cs.NumberOfBitInOutCode)
-		cs.Points = append(cs.Points, *point)
+		//cs.Points = append(cs.Points, *point)
+		cs.Points[i] = *point
 		outBit := point.GetOutputBit()
 		arr := cs.outBitToPointsMap[outBit]
 		arr = append(arr, i)

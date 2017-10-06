@@ -36,11 +36,9 @@ type Cluster struct {
 	ErrorFullCounter         int
 	ErrorPartialCounter      int
 	Weights                  map[int]float32
-	//HistoryMemory            []History
 	LearnCounter             int
 	inputLen                 int
 	clusterLength            int
-	//inputBitNums             []uint8
 }
 
 func NewCluster(inputBitSet bitarray.BitArray, inputLen int) *Cluster {
@@ -58,16 +56,6 @@ func NewCluster(inputBitSet bitarray.BitArray, inputLen int) *Cluster {
 		clusterLength:   len(nums),
 	}
 }
-
-/*func (c *Cluster) GetCurrentPotential(inputVector bitarray.BitArray) int {
-	inputBits := inputVector.And(c.inputBitSet).ToNums()
-	c.potential = len(inputBits)
-	return c.potential
-}*/
-
-/*func (c *Cluster) SetHistory(inputBits InputBits, active bool) {
-	c.HistoryMemory = append(c.HistoryMemory, History{InputBits: inputBits, OutputBit: active})
-}*/
 
 func (c *Cluster) SetStatus(status uint8) {
 	c.Status = status
@@ -127,52 +115,5 @@ func (c *Cluster) BitStatisticNew(resultNums []uint64) {
 		for i := range c.Weights {
 			c.Weights[i] = c.Weights[i] / max
 		}
-		//nu = nu * 0.8
 	}
 }
-
-/*func (c *Cluster) BitActivationStatistic() map[int]float32 {
-	var max float32 = 0
-	var a float32 = 0
-
-	activeBits := c.inputBitSet.ToNums()
-	clusterLength := len(activeBits)
-	f := make(map[int]float32, clusterLength)
-	nu := 1 / float32(clusterLength)
-
-	for _, num := range activeBits {
-		f[int(num)] = 1.0
-	}
-
-	for j := 0; j < 1; j++ {
-		for _, item := range c.HistoryMemory {
-			a = 0
-
-			for _, n := range activeBits {
-				if InArray8(int(n), item.InputBits) {
-					a += f[int(n)]
-				}
-			}
-
-			for _, n := range activeBits {
-				if InArray8(int(n), item.InputBits) {
-					fl := a * nu
-					f[int(n)] += fl
-				}
-			}
-
-			max = 0
-			for _, e := range f {
-				if e > max {
-					max = e
-				}
-			}
-
-			for i := range f {
-				f[i] = f[i] / max
-			}
-		}
-		nu = nu * 0.8
-	}
-	return f
-}*/

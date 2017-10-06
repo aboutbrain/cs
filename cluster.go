@@ -3,7 +3,7 @@ package cs
 import (
 	"strconv"
 
-	"github.com/golang-collections/go-datastructures/bitarray"
+	"github.com/aboutbrain/cs/bitarray"
 )
 
 const (
@@ -41,6 +41,7 @@ type Cluster struct {
 	HistoryMemory            []History
 	LearnCounter             int
 	inputLen                 uint64
+	clusterLength            int
 }
 
 func NewCluster(inputBitSet, targetBitSet bitarray.BitArray, inputLen uint64) *Cluster {
@@ -48,7 +49,7 @@ func NewCluster(inputBitSet, targetBitSet bitarray.BitArray, inputLen uint64) *C
 		Status:          ClusterTmp,
 		ActivationState: ClusterStateNon,
 		Weights:         make(map[int]float32),
-		inputLen: inputLen,
+		inputLen:        inputLen,
 	}
 	c.inputBitSet = inputBitSet
 	c.targetBitSet = targetBitSet
@@ -122,14 +123,14 @@ func (c *Cluster) BitActivationStatistic() ([]float32, []uint64) {
 			a = 0
 
 			for l, n := range activeBits {
-				if inArray(int(n), v.InputBits) {
+				if InArray64(int(n), v.InputBits) {
 					//a += int(f[l])
 					a += f[l]
 				}
 			}
 
 			for l, n := range activeBits {
-				if inArray(int(n), v.InputBits) {
+				if InArray64(int(n), v.InputBits) {
 					fl := float32(a) * nu
 					f[l] += fl
 				}

@@ -4,10 +4,10 @@ import (
 	"strings"
 
 	"github.com/aboutbrain/cs"
-	"github.com/golang-collections/go-datastructures/bitarray"
+	"github.com/aboutbrain/cs/bitarray"
 )
 
-const Alpha = " abcdefghijklmnopqrstuvwxyz.,*“”’?!-:�\n"
+const Alpha = "_ abcdefghijklmnopqrstuvwxyz.,*“”’?!-:�\n"
 
 //const Alpha = " ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -28,12 +28,14 @@ func GetCharContextMap(bitPerChar int, alpha string, capacity int, contextSize i
 		for i := 0; i < contextSize; i++ {
 			arr := bitarray.NewBitArray(uint64(capacity))
 			for j := 0; j < bitPerChar; j++ {
-			rnd:
-				bitNumber := cs.Random(0, capacity-1)
-				if a, _ := arr.GetBit(uint64(bitNumber)); a != true {
-					arr.SetBit(uint64(bitNumber))
-				} else {
-					goto rnd
+				if char != 95 {
+				rnd:
+					bitNumber := cs.Random(0, capacity-1)
+					if a, _ := arr.GetBit(uint64(bitNumber)); a != true {
+						arr.SetBit(uint64(bitNumber))
+					} else {
+						goto rnd
+					}
 				}
 			}
 			codes[int(char)][i] = arr

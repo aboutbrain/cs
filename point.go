@@ -1,6 +1,6 @@
 package cs
 
-import "github.com/golang-collections/go-datastructures/bitarray"
+import "github.com/aboutbrain/cs/bitarray"
 
 type Point struct {
 	id               int
@@ -38,22 +38,24 @@ func (p *Point) SetMemory(cluster *Cluster) {
 	p.Memory = append(p.Memory, *cluster)
 }
 
-func(p *Point) Cluster(clusterId int) *Cluster {
-	//if len(p.Memory) > 0 {
-		return &p.Memory[clusterId]
-	//}
-	//return nil
+func (p *Point) Cluster(clusterId int) *Cluster {
+	return &p.Memory[clusterId]
 }
 
-func (p *Point) DeleteCluster(clusterId int) *Point{
+func (p *Point) DeleteCluster(clusterId int) *Point {
 	p.Memory = append(p.Memory[:clusterId], p.Memory[clusterId+1:]...)
 	return p
 }
 
 func (p *Point) setReceptors() {
 	for i := 0; i < p.bitsPerInput; i++ {
-		bit := Random(0, p.inputVectorSize)
-		p.receptorSet.SetBit(uint64(bit))
+	rnd:
+		bitNumber := Random(0, p.inputVectorSize-1)
+		if a, _ := p.receptorSet.GetBit(uint64(bitNumber)); a != true {
+			p.receptorSet.SetBit(uint64(bitNumber))
+		} else {
+			goto rnd
+		}
 	}
 }
 
@@ -63,9 +65,14 @@ func (p *Point) GetReceptors() bitarray.BitArray {
 
 func (p *Point) setOutputs() {
 	for i := 0; i < p.bitsPerOutput; i++ {
-		bit := Random(0, p.outputVectorSize)
-		p.outputSet.SetBit(uint64(bit))
-		p.OutputBitArray = append(p.OutputBitArray, bit)
+	rnd:
+		bitNumber := Random(0, p.outputVectorSize-1)
+		if a, _ := p.outputSet.GetBit(uint64(bitNumber)); a != true {
+			p.outputSet.SetBit(uint64(bitNumber))
+			p.OutputBitArray = append(p.OutputBitArray, bitNumber)
+		} else {
+			goto rnd
+		}
 	}
 }
 

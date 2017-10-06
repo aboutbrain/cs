@@ -6,6 +6,7 @@ type CombinatorialSpace struct {
 	LearningMode             int
 	InternalTime             int
 	NumberOfPoints           int
+	NumberOfBitInInputCode   int
 	NumberOfReceptorsInPoint uint64
 	NumberOfOutputsInPoint   uint64
 	NumberOfBitInOutCode     int
@@ -13,12 +14,14 @@ type CombinatorialSpace struct {
 	OutHashSet               []HashMap
 	outBitToPointsMap        map[int][]int
 	clustersTotal            int
-	clustersPermanent        int
+	clustersPermanent1       int
+	clustersPermanent2       int
 }
 
-func NewCombinatorialSpace(size int, receptors, outputs uint64, outCode int) *CombinatorialSpace {
+func NewCombinatorialSpace(size int, inputCodeSize int, receptors, outputs uint64, outCode int) *CombinatorialSpace {
 	space := &CombinatorialSpace{
 		NumberOfPoints:           size,
+		NumberOfBitInInputCode:   inputCodeSize,
 		NumberOfReceptorsInPoint: receptors,
 		NumberOfOutputsInPoint:   outputs,
 		NumberOfBitInOutCode:     outCode,
@@ -45,15 +48,21 @@ func (cs *CombinatorialSpace) createPoints() {
 	}
 }
 
-func (cs *CombinatorialSpace) DeleteCluster(point *Point, clusterId int) {
+func (cs *CombinatorialSpace) DeleteCluster(point *Point, clusterId int, hashRemove bool) {
 	cluster := point.Cluster(clusterId)
 	status := cluster.Status
+	hash := cluster.GetHash()
 	point.DeleteCluster(clusterId)
 	cs.clustersTotal--
-	if status == ClusterPermanent2 {
-		cs.clustersPermanent--
+	if status == ClusterPermanent1 {
+		cs.clustersPermanent1--
 	}
-	cs.RemoveHash(point.id, cluster.GetHash())
+	if status == ClusterPermanent2 {
+		cs.clustersPermanent2--
+	}
+	if hashRemove {
+		cs.RemoveHash(point.id, hash)
+	}
 }
 
 func (cs *CombinatorialSpace) GetPointsByOutBitNumber(id int) []int {
@@ -78,6 +87,6 @@ func (cs *CombinatorialSpace) IncreaseClusters() {
 	cs.clustersTotal++
 }
 
-func (cs *CombinatorialSpace) ClustersCounters() (int, int) {
-	return cs.clustersTotal, cs.clustersPermanent
+func (cs *CombinatorialSpace) ClustersCounters() (int, int, int) {
+	return cs.clustersTotal, cs.clustersPermanent1, cs.clustersPermanent2
 }

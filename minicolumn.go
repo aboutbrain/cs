@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/golang-collections/go-datastructures/bitarray"
+	"github.com/aboutbrain/cs/bitarray"
+	"strconv"
 )
 
 var _ = log.Printf // For debugging; delete when done.
@@ -30,7 +31,7 @@ func NewMiniColumn(clusterThreshold, clusterActivationThreshold, memoryLimit int
 		clusterThreshold:           clusterThreshold,
 		clusterActivationThreshold: clusterActivationThreshold,
 		memoryLimit:                memoryLimit,
-		level:                      1,
+		level:                      2,
 		inputVectorLen:             inputVectorLen,
 		outputVectorLen:            outputVectorLen,
 		outputVector:               bitarray.NewBitArray(uint64(outputVectorLen)),
@@ -66,7 +67,39 @@ func (mc *MiniColumn) Calculate() bitarray.BitArray {
 	mc.makeOutVector()
 	mc.modifyClusters()
 	mc.consolidateMemory()
+	//mc.checkClusters("Calculate")
 	return mc.outputVector
+}
+
+func (mc *MiniColumn) checkClusters(method string){
+	clusters := mc.clustersCount()
+	hashes := mc.hashCount()
+	if clusters != hashes {
+		panic("Не совпадают: " + method + ", clusters:" + strconv.Itoa(clusters) + ", hashes:" + strconv.Itoa(hashes))
+	}
+	fmt.Printf("\nClustersCount: %d, HashesCount: %d after deleting\n", clusters, hashes)
+}
+
+func (mc *MiniColumn) clustersCount() int {
+	clusters := 0
+	for _, point := range mc.cs.Points {
+		for range point.Memory {
+			clusters++
+		}
+	}
+	//fmt.Printf("\nClustersCount after deleting: %d\n", clusters)
+	return clusters
+}
+
+func (mc *MiniColumn) hashCount() int {
+	hashCount := 0
+	for _, pointHash := range mc.cs.OutHashSet {
+		for range pointHash {
+			hashCount++
+		}
+	}
+	//fmt.Printf("HashesCount after deleting: %d\n\n", hashCount)
+	return hashCount
 }
 
 func (mc *MiniColumn) Learn(day bool) {
@@ -77,14 +110,19 @@ func (mc *MiniColumn) Learn(day bool) {
 }
 
 func (mc *MiniColumn) modifyClusters() {
+	//log.Println("Вошли в modifyClusters!!")
+	//mc.checkClusters("До modifyClusters")
 	clusters := 0
-	for pointId, point := range mc.cs.Points {
+	for pointId := range mc.cs.Points {
+		point := &mc.cs.Points[pointId]
 		deleted := 0
-		for clusterId, cluster := range point.Memory {
+		for clusterId := range point.Memory {
 			j := clusterId - deleted
+			cluster := &point.Memory[j]
 			clusters++
 			if cluster.Status != ClusterPermanent2 && (cluster.LearnCounter == 4 || cluster.LearnCounter == 16) {
 				f := cluster.BitActivationStatistic()
+				//f := cluster.Weights
 				clusterBitsNew := []uint64{}
 				for i := range f {
 					if f[i] > 0.75 {
@@ -97,39 +135,73 @@ func (mc *MiniColumn) modifyClusters() {
 						hashOld := cluster.GetHash()
 						cluster.SetNewBits(clusterBitsNew)
 						hashNew := cluster.GetHash()
-						if _, ok := mc.cs.OutHashSet[pointId][hashNew]; !ok {
-							mc.cs.RemoveHash(pointId, hashOld)
-							mc.cs.SetHash(pointId, hashNew)
-							point.Memory[j] = cluster
+						//cluster.created = "уменьшили - hashOld: " + hashOld + ", hashNew: " + hashNew
+						if !mc.cs.CheckOutHashSet(point.OutputBit, hashNew) {
+							t, ok := mc.cs.OutHashSet[point.OutputBit][hashNew]
+							t, ok = mc.cs.OutHashSet[point.OutputBit][hashOld]
+							mc.cs.RemoveHash(point.OutputBit, hashOld)
+							mc.cs.SetHash(point.OutputBit, hashNew)
+							t, ok = mc.cs.OutHashSet[point.OutputBit][hashOld]
+							t, ok = mc.cs.OutHashSet[point.OutputBit][hashNew]
+							_ = t
+							_ = ok
+
+							/*w := make(map[int]float32)
+							for _, v := range clusterBitsNew {
+								w[int(v)] = f[int(v)]
+							}
+							cluster.Weights = w*/
+							cluster.clusterLength = clusterBitsNewLen
+							//point.Memory[j] = cluster
+							//mc.cs.Points[pointId] = point
+							//log.Println("Поменяли по обрезке!, pointId:" + strconv.Itoa(point.id) + ", clusterId: " + strconv.Itoa(j))
+							//mc.checkClusters("modifyClusters в точке: " + strconv.Itoa(point.id) + ", clusterId: " + strconv.Itoa(j))
 						} else {
-							mc.cs.DeleteCluster(&point, j)
+							mc.cs.DeleteCluster(point, j, false)
+							mc.cs.RemoveHash(point.OutputBit, hashOld)
+							//mc.cs.Points[pointId] = point
 							deleted++
+							//log.Println("удалили по Хэшу активации!, pointId:" + strconv.Itoa(point.id) + ", clusterId: " + strconv.Itoa(j))
+							//mc.checkClusters("modifyClusters в точке: " + strconv.Itoa(point.id) + ", clusterId: " + strconv.Itoa(j))
 							continue
 						}
 					} else {
-						mc.cs.DeleteCluster(&point, j)
+						mc.cs.DeleteCluster(point, j, true)
+						//mc.cs.Points[pointId] = point
 						deleted++
+						//log.Println("удалили по Длине активации!, pointId:" + strconv.Itoa(point.id) + ", clusterId: " + strconv.Itoa(j))
+						//mc.checkClusters("modifyClusters в точке: " + strconv.Itoa(point.id) + ", clusterId: " + strconv.Itoa(j))
 						continue
 					}
 				}
 			}
-			//point.Memory[j] = cluster
+			//mc.checkClusters("modifyClusters в точке: " + strconv.Itoa(point.id))
 		}
-		mc.cs.Points[pointId] = point
+		//mc.cs.Points[pointId] = point
+		//mc.checkClusters("modifyClusters в точке: " + strconv.Itoa(point.id))
 	}
-	//fmt.Printf("\nClustersCount: %d\n", clusters)
+	//fmt.Printf("\nClustersCount after deleting: %d\n", clusters)
+	//mc.checkClusters("После modifyClusters")
+	//log.Println("Вышли из modifyClusters!!")
 }
 
 func (mc *MiniColumn) consolidateMemory() {
-	for pointId, point := range mc.cs.Points {
+	//log.Println("Вошли в consolidateMemory!!")
+	//mc.checkClusters("До consolidateMemory")
+	for pointId := range mc.cs.Points {
+		point := &mc.cs.Points[pointId]
 		deleted := 0
-		for clusterId, cluster := range point.Memory {
+		for clusterId := range point.Memory {
 			j := clusterId - deleted
-			if cluster.ActivationFullCounter > 25 {
+			cluster := &point.Memory[j]
+			if cluster.ActivationFullCounter > 20 {
 				errorFull := float32(cluster.ErrorFullCounter) / float32(cluster.ActivationFullCounter)
 				if errorFull > 0.05 {
-					mc.cs.DeleteCluster(&point, j)
+					mc.cs.DeleteCluster(point, j, true)
+					//log.Println("Удалили по ActivationFullCounter!, pointId:" + strconv.Itoa(point.id) + ", clusterId: " + strconv.Itoa(j))
+					//mc.checkClusters("ActivationFullCounter в точке: " + strconv.Itoa(point.id) + ", clusterId: " + strconv.Itoa(j))
 					deleted++
+					//log.Println("удалили по Полной активации!")
 					continue
 				} else if cluster.Status == ClusterTmp {
 					cluster.Status = ClusterPermanent2
@@ -140,8 +212,11 @@ func (mc *MiniColumn) consolidateMemory() {
 			if cluster.ActivationPartialCounter > 5 {
 				errorPartial := float32(cluster.ErrorPartialCounter) / float32(cluster.ActivationPartialCounter)
 				if errorPartial > 0.3 {
-					mc.cs.DeleteCluster(&point, j)
+					mc.cs.DeleteCluster(point, j, true)
+					//log.Println("Удалили по ActivationPartialCounter!, pointId:" + strconv.Itoa(point.id) + ", clusterId: " + strconv.Itoa(j))
+					//mc.checkClusters("ActivationPartialCounter в точке: " + strconv.Itoa(point.id) + ", clusterId: " + strconv.Itoa(j))
 					deleted++
+					//log.Println("удалили по частичной активации!")
 					continue
 				}
 			}
@@ -154,14 +229,18 @@ func (mc *MiniColumn) consolidateMemory() {
 				cluster.Status = ClusterPermanent2
 				mc.cs.clustersPermanent2++
 			}
-			point.Memory[j] = cluster
+			//point.Memory[j] = cluster
 		}
-		mc.cs.Points[pointId] = point
+		//mc.cs.Points[pointId] = point
 	}
+	//mc.checkClusters("После consolidateMemory")
+	//log.Println("Вышли из consolidateMemory!!")
 }
 
 func (mc *MiniColumn) activateClusters() {
+	//log.Println("Вошли в activateClusters!!")
 	stat := make(map[int]int)
+	clustersTotal := 0
 	clustersFullyActivated := 0
 	clustersPartialActivated := 0
 	for pointId, point := range mc.cs.Points {
@@ -170,11 +249,13 @@ func (mc *MiniColumn) activateClusters() {
 		clusters := 0
 		for clusterId, cluster := range point.Memory {
 			clusters++
-			//cluster.BitStatisticNew(mc.inputVector)
-			potential, inputBits := cluster.GetCurrentPotential(mc.inputVector)
+			clustersTotal++
+			result := cluster.inputBitSet.And(mc.inputVector)
+			nums := result.ToNums()
+			cluster.potential = len(nums)
 			inputSize := cluster.GetInputSize()
 			active, _ := mc.learningVector.GetBit(uint64(point.GetOutputBit()))
-			if potential == inputSize {
+			if cluster.potential == inputSize {
 				cluster.SetActivationStatus(ClusterStatusFull)
 				cluster.ActivationFullCounter++
 				clustersFullyActivated++
@@ -182,9 +263,9 @@ func (mc *MiniColumn) activateClusters() {
 					cluster.ErrorFullCounter++
 				}
 				if cluster.Status == ClusterPermanent2 {
-					pointPotential += potential - mc.clusterActivationThreshold + 1
+					pointPotential += cluster.potential - mc.clusterActivationThreshold + 1
 				}
-			} else if int(potential) >= mc.clusterActivationThreshold {
+			} else if int(cluster.potential) >= mc.clusterActivationThreshold {
 				clustersPartialActivated++
 				cluster.SetActivationStatus(ClusterStatePartial)
 				cluster.ActivationPartialCounter++
@@ -192,8 +273,9 @@ func (mc *MiniColumn) activateClusters() {
 					cluster.ErrorPartialCounter++
 				} else {
 					if cluster.Status != ClusterPermanent2 {
-						cluster.BitStatisticNew(mc.inputVector)
-						cluster.SetHistory(inputBits, active)
+						//cluster.BitStatisticNew(nums)
+
+						cluster.SetHistory(nums, active)
 					}
 				}
 				if cluster.Status != ClusterPermanent2 {
@@ -207,9 +289,11 @@ func (mc *MiniColumn) activateClusters() {
 		mc.cs.Points[pointId] = point
 	}
 	fmt.Printf("ActivatedClusters: Fully: %d, Partly: %d\n", clustersFullyActivated, clustersPartialActivated)
+	fmt.Printf("\nClustersTotal before deleting: %d\n", clustersTotal)
 	/*for i, v := range stat {
 		fmt.Printf("Clusters: %d, Points: %d\n", i, v)
 	}*/
+	//log.Println("Вышли из activateClusters!!")
 }
 
 func (mc *MiniColumn) makeOutVector() {
@@ -230,28 +314,31 @@ func (mc *MiniColumn) OutVector() bitarray.BitArray {
 }
 
 func (mc *MiniColumn) addNewClusters() {
+	//log.Println("Вошли в addNewClusters!!")
 	for pointId, point := range mc.cs.Points {
 
 		receptors := point.GetReceptors()
-		receptorsActiveCount := mc.inputVector.And(receptors)
+		activeReceptors := mc.inputVector.And(receptors)
 
 		outputBit := point.GetOutputBit()
 		active, _ := mc.learningVector.GetBit(uint64(outputBit))
 
-		receptorsActiveLen := len(receptorsActiveCount.ToNums())
+		receptorsActiveLen := len(activeReceptors.ToNums())
 		memorySize := len(point.Memory)
 
 		if receptorsActiveLen >= mc.clusterThreshold && active && memorySize < mc.memoryLimit {
-			cluster := NewCluster(receptorsActiveCount, mc.inputVectorLen)
+			cluster := NewCluster(activeReceptors, mc.inputVectorLen)
 			cluster.startTime = mc.cs.InternalTime
 			hash := cluster.GetHash()
-			if !mc.cs.CheckOutHashSet(pointId, hash) {
+			if !mc.cs.CheckOutHashSet(outputBit, hash) {
 				point.SetMemory(cluster)
 				mc.cs.Points[pointId] = point
-				mc.cs.SetHash(pointId, hash)
+				mc.cs.SetHash(outputBit, hash)
 				mc.cs.clustersTotal++
+				//log.Println("Добавили новый!")
 			}
 		}
 	}
 	mc.epoch++
+	//log.Println("Вышли из addNewClusters!!")
 }

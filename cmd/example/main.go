@@ -26,6 +26,7 @@ const (
 	ClusterActivationThreshold = 4
 	CharacterBits              = 8
 	PointMemoryLimit           = 100
+	Level                      = 2
 )
 
 func main() {
@@ -66,7 +67,7 @@ func main() {
 	codes := persist.FromFile(path)
 
 	comSpace := cs.NewCombinatorialSpace(CombinatorialSpaceSize, InputVectorSize, ReceptorsPerPoint, OutputVectorSize)
-	mc := cs.NewMiniColumn(ClusterThreshold, ClusterActivationThreshold, PointMemoryLimit, InputVectorSize, OutputVectorSize)
+	mc := cs.NewMiniColumn(ClusterThreshold, ClusterActivationThreshold, PointMemoryLimit, InputVectorSize, OutputVectorSize, Level)
 	mc.SetCombinatorialSpace(comSpace)
 
 	day := true
@@ -79,7 +80,7 @@ func main() {
 
 	textPosition := 0
 
-	const Segment  = 500
+	const Segment = 500
 
 	for i := 0; i < 10; i++ {
 		for j := 0; j < Segment; j++ {

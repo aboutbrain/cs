@@ -1,7 +1,5 @@
 package cs
 
-import "log"
-
 type HashMap map[string]bool
 
 type CombinatorialSpace struct {
@@ -39,7 +37,6 @@ func NewCombinatorialSpace(size, inputCodeSize int, receptors uint64, outCode in
 func (cs *CombinatorialSpace) createPoints() {
 	for i := 0; i < cs.NumberOfPoints; i++ {
 		point := NewPoint(i, cs.NumberOfBitInInputCode, int(cs.NumberOfReceptorsInPoint), cs.NumberOfBitInOutCode)
-		//cs.Points = append(cs.Points, *point)
 		cs.Points[i] = *point
 		outBit := point.GetOutputBit()
 		arr := cs.outBitToPointsMap[outBit]
@@ -80,10 +77,6 @@ func (cs *CombinatorialSpace) SetHash(outBit int, hash string) {
 }
 
 func (cs *CombinatorialSpace) RemoveHash(outBit int, hash string) {
-	val, ok := cs.OutHashSet[outBit][hash]
-	if !ok {
-		log.Printf("нет такого элемента (%s) в карте, value: %b", hash, val)
-	}
 	delete(cs.OutHashSet[outBit], hash)
 }
 

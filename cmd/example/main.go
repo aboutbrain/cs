@@ -80,12 +80,13 @@ func main() {
 	textPosition := 0
 
 	const Segment = 500
+	const Fragment = 1
 
 	for i := 0; i < 10; i++ {
 		for j := 0; j < Segment; j++ {
 			context := 1
 
-			txt := strings.ToLower(s[textPosition : textPosition+9])
+			txt := strings.ToLower(s[textPosition : textPosition+Fragment])
 
 			textFragment := "" //strings.Repeat("_", context)
 			textFragment += txt
@@ -148,10 +149,12 @@ func showVectors(source, output, learning bitarray.BitArray, nVector bool) {
 	fmt.Printf("LerningVector: %s\n", cs.BitArrayToString(learning, OutputVectorSize))
 	fmt.Printf("DeltaVector:   %s\n", BitArrayToString2(output, learning, OutputVectorSize))
 
-	if !nVector {
-		fmt.Println("\033[31mFAIL!!\033[0m")
-	} else {
-		fmt.Println("\033[32mPASS!!\033[0m")
+	if len(output.ToNums()) > 0 {
+		if !nVector {
+			fmt.Println("\033[31mFAIL!!\033[0m")
+		} else {
+			fmt.Println("\033[32mPASS!!\033[0m")
+		}
 	}
 }
 

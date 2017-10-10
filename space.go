@@ -50,16 +50,9 @@ func (cs *CombinatorialSpace) createPoints() {
 
 func (cs *CombinatorialSpace) DeleteCluster(point *Point, clusterId int, hashRemove bool) {
 	cluster := point.Cluster(clusterId)
-	status := cluster.Status
 	hash := cluster.GetHash()
 	point.DeleteCluster(clusterId)
 	cs.clustersTotal--
-	if status == ClusterPermanent1 {
-		cs.clustersPermanent1--
-	}
-	if status == ClusterPermanent2 {
-		cs.clustersPermanent2--
-	}
 	if hashRemove {
 		cs.RemoveHash(point.id, hash)
 	}

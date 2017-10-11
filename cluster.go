@@ -135,7 +135,7 @@ func (c *Cluster) CalculatingInputCoincidence(inputVector bitarray.BitArray) {
 		s += c.inputWeights[i]
 
 		if c.inputWeights[i] > 0 {
-			c.clusterResultLength1 -= bitValue
+			c.clusterResultLength1 += bitValue
 			s1++
 		}
 	}
@@ -147,7 +147,6 @@ func (c *Cluster) CalculatingInputCoincidence(inputVector bitarray.BitArray) {
 func (c *Cluster) CalculatingOutputCoincidence(inputVector bitarray.BitArray) {
 	c.clusterTargetLength = 0
 	aOut1 := float32(0)
-	c.q = 0
 
 	s := float32(0)
 	s1 := 0
@@ -164,7 +163,7 @@ func (c *Cluster) CalculatingOutputCoincidence(inputVector bitarray.BitArray) {
 		s += c.outputWeights[i]
 
 		if c.outputWeights[i] > 0 {
-			aOut1 -= bitValue
+			aOut1 += bitValue
 			s1++
 		}
 	}
@@ -204,7 +203,7 @@ func (c *Cluster) fTRHigh() float32 {
 	ftrHigh := float32(1)
 	s := c.sX + c.sY
 	if s > 4 {
-		ftrHigh = (c.R + Tb2/(s*2) - Tb*float32(math.Sqrt(float64(c.R*(1-c.R)/s+Tb2/(4*s*s))))) / (1 + Tb2/s)
+		ftrHigh = (c.R + Tb2/(s*2) + Tb*float32(math.Sqrt(float64(c.R*(1-c.R)/s+Tb2/(4*s*s))))) / (1 + Tb2/s)
 	}
 	return ftrHigh
 }

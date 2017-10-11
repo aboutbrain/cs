@@ -60,6 +60,7 @@ func (mc *MiniColumn) Calculate() bitarray.BitArray {
 }
 
 func (mc *MiniColumn) Learn(day bool) {
+	mc.needActivate = true
 	if mc.needActivate {
 		mc.activateClustersInput()
 	}
@@ -105,6 +106,7 @@ func (mc *MiniColumn) consolidateMemory() {
 			cluster := &point.Memory[j]
 			if cluster.rHigh < 0.7 || cluster.Status == ClusterDeleting {
 				point.DeleteCluster(j)
+				deleted++
 				mc.cs.clustersTotal--
 			}
 		}
@@ -139,7 +141,7 @@ func (mc *MiniColumn) activateClustersOutput() {
 }
 
 func (mc *MiniColumn) makeOutVector() {
-	const lowP = float32(0.9)
+	const lowP = float32(0.8)
 	mc.outputVector.Reset()
 	for i, currentOutBitPointsMap := range mc.cs.outBitToPointsMap {
 		for _, pointId := range currentOutBitPointsMap {
@@ -170,7 +172,7 @@ func (mc *MiniColumn) addNewClusters() {
 		outputsActiveLen := len(outputsActiveCount.ToNums())
 		memorySize := len(point.Memory)
 
-		if receptorsActiveLen >= 5 && outputsActiveLen >= 5 && memorySize < mc.memoryLimit {
+		if receptorsActiveLen >= 3 && outputsActiveLen >= 3 && memorySize < mc.memoryLimit {
 			cluster := NewCluster(activeReceptors, outputsActiveCount, mc.inputVectorLen)
 			cluster.startTime = mc.cs.InternalTime
 			hash := cluster.GetHash()

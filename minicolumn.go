@@ -141,16 +141,22 @@ func (mc *MiniColumn) activateClustersOutput() {
 }
 
 func (mc *MiniColumn) makeOutVector() {
-	const lowP = float32(0.8)
+	const lowP = float32(0.7)
 	mc.outputVector.Reset()
 	for i, currentOutBitPointsMap := range mc.cs.outBitToPointsMap {
+		potential := float32(0)
 		for _, pointId := range currentOutBitPointsMap {
 			point := &mc.cs.Points[pointId]
 			for _, cluster := range point.Memory {
-				if cluster.q > lowP {
-					mc.outputVector.SetBit(uint64(i))
+				if cluster.R > lowP {
+					if result, _ := cluster.targetBitSet.GetBit(uint64(i)); result {
+						potential += cluster.clusterResultLength
+					}
 				}
 			}
+		}
+		if potential > 30 {
+			mc.outputVector.SetBit(uint64(i))
 		}
 	}
 }

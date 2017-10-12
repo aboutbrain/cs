@@ -30,36 +30,36 @@ type History struct {
 }
 
 type Cluster struct {
-	Status                   int
-	startTime                int
-	inputBitSet              bitarray.BitArray
-	targetBitSet             bitarray.BitArray
-	ActivationState          int
-	potential                int
-	ActivationFullCounter    int
-	ActivationPartialCounter int
-	ErrorFullCounter         int
-	ErrorPartialCounter      int
-	nLearn                   float64
-	inputCoincidence         float32
-	outputCoincidence        float32
-	inputWeights             map[int]float32
-	outputWeights            map[int]float32
-	HistoryMemory            []History
-	LearnCounter             int
-	inputLen                 uint64
-	clusterTargetLength      float32
-	clusterResultLength      float32
-	clusterTargetLength1     float32
-	clusterResultLength1     float32
-	rHigh                    float32
-	rLow                     float32
-	q                        float32
-	sX                       float32
-	sY                       float32
-	sXY                      float32
-	realSXY                  float32
-	R                        float32
+	Status          int
+	startTime       int
+	inputBitSet     bitarray.BitArray
+	targetBitSet    bitarray.BitArray
+	ActivationState int
+	//potential                int
+	//ActivationFullCounter    int
+	//ActivationPartialCounter int
+	//ErrorFullCounter         int
+	//ErrorPartialCounter      int
+	nLearn               float64
+	inputCoincidence     float32
+	outputCoincidence    float32
+	inputWeights         map[int]float32
+	outputWeights        map[int]float32
+	HistoryMemory        []History
+	LearnCounter         int
+	inputLen             uint64
+	clusterResultLength  float32
+	clusterResultLength1 float32
+	clusterTargetLength  float32
+	clusterTargetLength1 float32
+	rHigh                float32
+	rLow                 float32
+	q                    float32
+	sX                   float32
+	sY                   float32
+	sXY                  float32
+	realSXY              float32
+	R                    float32
 }
 
 func NewCluster(inputBitSet, targetBitSet bitarray.BitArray, inputLen uint64) *Cluster {
@@ -93,11 +93,11 @@ func NewCluster(inputBitSet, targetBitSet bitarray.BitArray, inputLen uint64) *C
 	return c
 }
 
-func (c *Cluster) GetCurrentPotential(inputVector bitarray.BitArray) (int, InputBits) {
+/*func (c *Cluster) GetCurrentPotential(inputVector bitarray.BitArray) (int, InputBits) {
 	inputBits := inputVector.And(c.inputBitSet).ToNums()
 	c.potential = len(inputBits)
 	return c.potential, inputBits
-}
+}*/
 
 func (c *Cluster) SetStatus(status int) {
 	c.Status = status
@@ -146,7 +146,7 @@ func (c *Cluster) CalculatingInputCoincidence(inputVector bitarray.BitArray) {
 
 func (c *Cluster) CalculatingOutputCoincidence(inputVector bitarray.BitArray) {
 	c.clusterTargetLength = 0
-	aOut1 := float32(0)
+	c.clusterTargetLength1 = 0
 
 	s := float32(0)
 	s1 := 0
@@ -163,11 +163,11 @@ func (c *Cluster) CalculatingOutputCoincidence(inputVector bitarray.BitArray) {
 		s += c.outputWeights[i]
 
 		if c.outputWeights[i] > 0 {
-			aOut1 += bitValue
+			c.clusterTargetLength1 += bitValue
 			s1++
 		}
 	}
-	c.outputCoincidence = c.clusterResultLength / s
+	c.outputCoincidence = c.clusterTargetLength / s
 	c.clusterTargetLength1 = c.clusterTargetLength1 / float32(s1)
 }
 

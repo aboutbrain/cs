@@ -185,27 +185,22 @@ func (c *Cluster) CalculateCorrelation() {
 		c.sX = (c.sX + c.clusterResultLength1) * k
 		c.sY = (c.sY + c.clusterTargetLength1) * k
 		c.R = c.sXY / float32(math.Sqrt(float64(c.sX*c.sY)))
-		c.rLow = c.fTRLow()
-		c.rHigh = c.fTRHigh()
+		c.rLow, c.rHigh = c.fTR()
 	}
 }
 
-func (c *Cluster) fTRLow() float32 {
+func (c *Cluster) fTR() (float32, float32) {
 	ftrLow := float32(0.8)
-	s := c.sX + c.sY
-	if s > 4 {
-		ftrLow = (c.R + Tb2/(s*2) - Tb*float32(math.Sqrt(float64(c.R*(1-c.R)/s+Tb2/(4*s*s))))) / (1 + Tb2/s)
-	}
-	return ftrLow
-}
-
-func (c *Cluster) fTRHigh() float32 {
 	ftrHigh := float32(1)
 	s := c.sX + c.sY
 	if s > 4 {
-		ftrHigh = (c.R + Tb2/(s*2) + Tb*float32(math.Sqrt(float64(c.R*(1-c.R)/s+Tb2/(4*s*s))))) / (1 + Tb2/s)
+		i := c.R + Tb2/(2*s)
+		f := Tb * float32(math.Sqrt(float64(c.R*(1-c.R)/s+Tb2/(4*s*s))))
+		i2 := 1 + Tb2/s
+		ftrLow = (i - f) / i2
+		ftrHigh = (i + f) / i2
 	}
-	return ftrHigh
+	return ftrLow, ftrHigh
 }
 
 func (c *Cluster) Learn(inputVector, learningVector bitarray.BitArray) {

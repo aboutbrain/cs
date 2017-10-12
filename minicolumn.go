@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 
+	"math"
+
 	"github.com/aboutbrain/cs/bitarray"
 )
 
@@ -43,14 +45,16 @@ func (mc *MiniColumn) SetCombinatorialSpace(cs *CombinatorialSpace) {
 	mc.cs = cs
 }
 
-func (mc *MiniColumn) SetInputVector(inputVector bitarray.BitArray) {
+func (mc *MiniColumn) SetInputVector(inputVector bitarray.BitArray) int {
 	mc.inputVector = inputVector
 	mc.inputLen = len(mc.inputVector.ToNums())
+	return mc.inputLen
 }
 
-func (mc *MiniColumn) SetLearningVector(learningVector bitarray.BitArray) {
+func (mc *MiniColumn) SetLearningVector(learningVector bitarray.BitArray) int {
 	mc.learningVector = learningVector
 	mc.outputLen = len(mc.learningVector.ToNums())
+	return mc.outputLen
 }
 
 func (mc *MiniColumn) Calculate() bitarray.BitArray {
@@ -60,7 +64,7 @@ func (mc *MiniColumn) Calculate() bitarray.BitArray {
 }
 
 func (mc *MiniColumn) Learn(day bool) {
-	mc.needActivate = true
+	mc.needActivate = false
 	if mc.needActivate {
 		mc.activateClustersInput()
 	}
@@ -115,8 +119,8 @@ func (mc *MiniColumn) consolidateMemory() {
 
 func (mc *MiniColumn) activateClustersInput() {
 	stat := make(map[int]int)
-	clustersFullyActivated := 0
-	clustersPartialActivated := 0
+	//clustersFullyActivated := 0
+	//clustersPartialActivated := 0
 	for pointId := range mc.cs.Points {
 		point := &mc.cs.Points[pointId]
 		for clusterId := range point.Memory {
@@ -127,7 +131,7 @@ func (mc *MiniColumn) activateClustersInput() {
 	for i, v := range stat {
 		fmt.Printf("Clusters: %d, Points: %d\n", i, v)
 	}
-	fmt.Printf("ActivatedClusters: Fully: %d, Partly: %d\n", clustersFullyActivated, clustersPartialActivated)
+	//fmt.Printf("ActivatedClusters: Fully: %d, Partly: %d\n", clustersFullyActivated, clustersPartialActivated)
 }
 
 func (mc *MiniColumn) activateClustersOutput() {
@@ -151,6 +155,8 @@ func (mc *MiniColumn) makeOutVector() {
 				if cluster.q > lowP {
 					if result, _ := cluster.targetBitSet.GetBit(uint64(i)); result {
 						potential += cluster.clusterResultLength
+					} else {
+						potential -= cluster.clusterResultLength
 					}
 				}
 			}
@@ -178,7 +184,10 @@ func (mc *MiniColumn) addNewClusters() {
 		outputsActiveLen := len(outputsActiveCount.ToNums())
 		memorySize := len(point.Memory)
 
-		if receptorsActiveLen >= 3 && outputsActiveLen >= 3 && memorySize < mc.memoryLimit {
+		inputMin := int(math.Sqrt(float64(mc.inputLen)))
+		outputMin := int(math.Sqrt(float64(mc.outputLen)))
+
+		if receptorsActiveLen >= inputMin+1 && outputsActiveLen >= outputMin+1 && memorySize < mc.memoryLimit {
 			cluster := NewCluster(activeReceptors, outputsActiveCount, mc.inputVectorLen)
 			cluster.startTime = mc.cs.InternalTime
 			hash := cluster.GetHash()

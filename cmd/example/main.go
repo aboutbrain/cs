@@ -80,7 +80,7 @@ func main() {
 	textPosition := 0
 
 	const Segment = 500
-	const Fragment = 1
+	const Fragment = 5
 
 	for i := 0; i < 10; i++ {
 		for j := 0; j < Segment; j++ {
@@ -94,18 +94,17 @@ func main() {
 			textFragment += after
 
 			sourceCode := text.GetTextFragmentCode(textFragment, codes)
-			inputBits := len(sourceCode.ToNums())
+			inputBits := mc.SetInputVector(sourceCode)
+			//inputBits := len(sourceCode.ToNums())
 			fmt.Printf("i: %d, InputText  : \"%s\", Bit: %d\n", i*Segment+j, textFragment, inputBits)
 
 			targetText := strings.Repeat("_", context) + txt
 			targetText += strings.Repeat("_", ContextSize-len(targetText))
 			learningCode := text.GetTextFragmentCode(targetText, codes)
-			learningBits := len(learningCode.ToNums())
+			learningBits := mc.SetLearningVector(learningCode)
+			//learningBits := len(learningCode.ToNums())
 			fmt.Printf("i: %d, TargetText : \"%s\", Bit: %d\n", i*Segment+j, targetText, learningBits)
 			//learningCode := wordCodeMap[word][0]
-
-			mc.SetInputVector(sourceCode)
-			mc.SetLearningVector(learningCode)
 
 			outputVector := mc.Calculate()
 

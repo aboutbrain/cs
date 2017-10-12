@@ -5,6 +5,8 @@ import (
 
 	"math"
 
+	"fmt"
+
 	"github.com/aboutbrain/cs/bitarray"
 )
 
@@ -249,6 +251,7 @@ func (c *Cluster) Learn(inputVector, learningVector bitarray.BitArray) {
 
 	if s1 <= 2 {
 		c.Status = ClusterDeleting
+		fmt.Printf("кластер - удален!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
 		return
 	}
 

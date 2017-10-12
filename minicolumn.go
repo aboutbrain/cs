@@ -108,12 +108,15 @@ func (mc *MiniColumn) consolidateMemory() {
 		for clusterId := range point.Memory {
 			j := clusterId - deleted
 			cluster := &point.Memory[j]
-			if cluster.rHigh < 0.7 || cluster.Status == ClusterDeleting {
+			if cluster.rHigh < 0.80 || cluster.Status == ClusterDeleting {
 				point.DeleteCluster(j)
 				deleted++
 				mc.cs.clustersTotal--
 			}
 		}
+		/*if deleted > 0 {
+			fmt.Printf("У точки %d удалено %d кластеров\n", pointId, deleted)
+		}*/
 	}
 }
 
@@ -154,14 +157,14 @@ func (mc *MiniColumn) makeOutVector() {
 			for _, cluster := range point.Memory {
 				if cluster.q > lowP {
 					if result, _ := cluster.targetBitSet.GetBit(uint64(i)); result {
-						potential += cluster.clusterResultLength
+						potential += cluster.inputCoincidence
 					} else {
-						potential -= cluster.clusterResultLength
+						potential -= cluster.inputCoincidence
 					}
 				}
 			}
 		}
-		if potential > 30 {
+		if potential >= 5 {
 			mc.outputVector.SetBit(uint64(i))
 		}
 	}
@@ -184,10 +187,10 @@ func (mc *MiniColumn) addNewClusters() {
 		outputsActiveLen := len(outputsActiveCount.ToNums())
 		memorySize := len(point.Memory)
 
-		inputMin := int(math.Sqrt(float64(mc.inputLen)))
-		outputMin := int(math.Sqrt(float64(mc.outputLen)))
+		inputMin := int(math.Sqrt(float64(3 * mc.inputLen)))
+		outputMin := int(math.Sqrt(float64(3 * mc.outputLen)))
 
-		if receptorsActiveLen >= inputMin+1 && outputsActiveLen >= outputMin+1 && memorySize < mc.memoryLimit {
+		if receptorsActiveLen >= inputMin-2 && outputsActiveLen >= outputMin-1 && memorySize < mc.memoryLimit {
 			cluster := NewCluster(activeReceptors, outputsActiveCount, mc.inputVectorLen)
 			cluster.startTime = mc.cs.InternalTime
 			hash := cluster.GetHash()

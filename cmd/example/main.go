@@ -78,17 +78,23 @@ func main() {
 	}
 
 	textPosition := 0
+	offset := 0
 
-	const Segment = 500
-	const Fragment = 5
+	const Segment = 1000
+	const DayTime = 500
+	Fragment := 1
 
 	for i := 0; i < 10; i++ {
 		for j := 0; j < Segment; j++ {
 			context := 1
 
+			if Fragment == 1 {
+				offset = cs.Random(0, 6-Fragment)
+			}
+
 			txt := strings.ToLower(s[textPosition : textPosition+Fragment])
 
-			textFragment := "" //strings.Repeat("_", context)
+			textFragment := strings.Repeat("_", offset)
 			textFragment += txt
 			after := strings.Repeat("_", ContextSize-len(textFragment))
 			textFragment += after
@@ -98,7 +104,7 @@ func main() {
 			//inputBits := len(sourceCode.ToNums())
 			fmt.Printf("i: %d, InputText  : \"%s\", Bit: %d\n", i*Segment+j, textFragment, inputBits)
 
-			targetText := strings.Repeat("_", context) + txt
+			targetText := strings.Repeat("_", offset+context) + txt
 			targetText += strings.Repeat("_", ContextSize-len(targetText))
 			learningCode := text.GetTextFragmentCode(targetText, codes)
 			learningBits := mc.SetLearningVector(learningCode)
@@ -114,7 +120,7 @@ func main() {
 				s := "Day"
 				if !nVector {
 					s += " - learning!"
-					mc.Learn(day)
+					//mc.Learn(day)
 				}
 				fmt.Println(s)
 			} else {
@@ -124,7 +130,8 @@ func main() {
 				}
 				fmt.Println(s)
 			}
-			if t == Segment {
+			mc.Learn(day)
+			if t == DayTime {
 				t = 0
 				day = !day
 			}
@@ -137,6 +144,9 @@ func main() {
 			comSpace.InternalTime++
 			t++
 			textPosition++
+		}
+		if day {
+			Fragment++
 		}
 	}
 }

@@ -32,23 +32,25 @@ type History struct {
 }
 
 type Cluster struct {
-	Status          int
-	startTime       int
-	inputBitSet     bitarray.BitArray
-	targetBitSet    bitarray.BitArray
-	ActivationState int
+	Status       int
+	startTime    int
+	inputBitSet  bitarray.BitArray
+	targetBitSet bitarray.BitArray
+	//ActivationState int
+	textFragment string
+	initHash     string
 	//potential                int
 	//ActivationFullCounter    int
 	//ActivationPartialCounter int
 	//ErrorFullCounter         int
 	//ErrorPartialCounter      int
-	nLearn               float64
-	inputCoincidence     float32
-	outputCoincidence    float32
-	inputWeights         map[int]float32
-	outputWeights        map[int]float32
-	HistoryMemory        []History
-	LearnCounter         int
+	nLearn            float64
+	inputCoincidence  float32
+	outputCoincidence float32
+	inputWeights      map[int]float32
+	outputWeights     map[int]float32
+	//HistoryMemory        []History
+	//LearnCounter         int
 	inputLen             uint64
 	clusterResultLength  float32
 	clusterResultLength1 float32
@@ -66,18 +68,18 @@ type Cluster struct {
 
 func NewCluster(inputBitSet, targetBitSet bitarray.BitArray, inputLen uint64) *Cluster {
 	c := &Cluster{
-		Status:          ClusterNormal,
-		ActivationState: ClusterStateNon,
-		inputWeights:    make(map[int]float32),
-		outputWeights:   make(map[int]float32),
-		inputLen:        inputLen,
-		nLearn:          1,
-		rHigh:           1,
-		rLow:            0.6,
-		sXY:             1,
-		realSXY:         1,
-		sX:              1,
-		sY:              1,
+		Status: ClusterNormal,
+		//ActivationState: ClusterStateNon,
+		inputWeights:  make(map[int]float32),
+		outputWeights: make(map[int]float32),
+		inputLen:      inputLen,
+		nLearn:        1,
+		rHigh:         1,
+		rLow:          0.6,
+		sXY:           1,
+		realSXY:       1,
+		sX:            1,
+		sY:            1,
 	}
 	c.inputBitSet = inputBitSet
 	inputNums := c.inputBitSet.ToNums()
@@ -105,13 +107,13 @@ func (c *Cluster) SetStatus(status int) {
 	c.Status = status
 }
 
-func (c *Cluster) LearnCounterIncrease() {
+/*func (c *Cluster) LearnCounterIncrease() {
 	c.LearnCounter++
-}
+}*/
 
-func (c *Cluster) SetActivationStatus(status int) {
+/*func (c *Cluster) SetActivationStatus(status int) {
 	c.ActivationState = status
-}
+}*/
 
 func (c *Cluster) GetInputSize() int {
 	return len(c.inputBitSet.ToNums())
@@ -240,13 +242,16 @@ func (c *Cluster) Learn(inputVector, learningVector bitarray.BitArray) {
 	}
 
 	s1 := float32(0)
-
+	inputLen := len(c.inputWeights)
 	for i := range c.inputWeights {
 		c.inputWeights[i] = c.inputWeights[i] / max
 		if c.inputWeights[i] < LearnDelete {
-			c.inputWeights[i] = 0
+			delete(c.inputWeights, i)
 		}
 		s1 += c.inputWeights[i]
+	}
+	if inputLen > len(c.inputWeights) {
+		c.setNewInputBits()
 	}
 
 	if s1 <= 2 {
@@ -266,12 +271,16 @@ func (c *Cluster) Learn(inputVector, learningVector bitarray.BitArray) {
 		}
 	}
 
+	outputLen := len(c.outputWeights)
 	for i := range c.outputWeights {
 		c.outputWeights[i] = c.outputWeights[i] / max
 		if c.outputWeights[i] < LearnDelete {
-			c.outputWeights[i] = 0
+			delete(c.outputWeights, i)
 		}
 		s1 += c.outputWeights[i]
+	}
+	if outputLen > len(c.outputWeights) {
+		c.setNewOutputBits()
 	}
 }
 
@@ -289,10 +298,18 @@ func (c *Cluster) GetHash() string {
 	return hash
 }
 
-func (c *Cluster) SetNewBits(nums []uint64) {
+func (c *Cluster) setNewInputBits() {
 	a := bitarray.NewBitArray(c.inputLen)
-	for _, num := range nums {
-		a.SetBit(num)
+	for num := range c.inputWeights {
+		a.SetBit(uint64(num))
 	}
 	c.inputBitSet = a
+}
+
+func (c *Cluster) setNewOutputBits() {
+	a := bitarray.NewBitArray(c.inputLen)
+	for num := range c.outputWeights {
+		a.SetBit(uint64(num))
+	}
+	c.targetBitSet = a
 }

@@ -12,6 +12,7 @@ type Point struct {
 	outputSet        bitarray.BitArray
 	Memory           []Cluster
 	potential        int
+	activated        int
 	OutputBitArray   []int
 }
 

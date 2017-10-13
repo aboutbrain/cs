@@ -19,9 +19,9 @@ const (
 	InputVectorSize            = 128
 	OutputVectorSize           = 128
 	ContextSize                = 10
-	CombinatorialSpaceSize     = 60000
-	ReceptorsPerPoint          = 16
-	OutputsPerPoint            = 16
+	CombinatorialSpaceSize     = 20000
+	ReceptorsPerPoint          = 24
+	OutputsPerPoint            = 24
 	ClusterThreshold           = 6
 	ClusterActivationThreshold = 4
 	CharacterBits              = 5
@@ -84,17 +84,17 @@ func main() {
 
 	const Segment = 3000
 	const DayTime = 500
-	Fragment := 1
+	Fragment := 9
 
 	for i := 0; i < 10; i++ {
 		for j := 0; j < Segment; j++ {
 			context := 1
 
-			if Fragment < 2 {
-				offset = cs.Random(0, 10-Fragment)
+			/*if Fragment < 2 {
+				offset = cs.Random(0, 6-Fragment)
 			} else {
 				offset = 0
-			}
+			}*/
 
 			txt := strings.ToLower(s[textPosition : textPosition+Fragment])
 
@@ -105,6 +105,7 @@ func main() {
 
 			sourceCode := text.GetTextFragmentCode(textFragment, codes)
 			inputBits := mc.SetInputVector(sourceCode)
+			mc.InputText = textFragment
 			//inputBits := len(sourceCode.ToNums())
 			fmt.Printf("i: %d, InputText  : \"%s\", Bit: %d\n", i*Segment+j, textFragment, inputBits)
 
@@ -120,6 +121,7 @@ func main() {
 
 			nVector := learningCode.Equals(outputVector)
 
+			memOn = false
 			if day == true {
 				s := "Day"
 				if !nVector {
@@ -128,7 +130,7 @@ func main() {
 				}
 				fmt.Println(s)
 			} else {
-				memOn = false
+				//memOn = false
 				s := "Night"
 				if nVector {
 					s += " - learned!"
@@ -150,9 +152,9 @@ func main() {
 			t++
 			textPosition++
 		}
-		if !day {
+		/*if !day {
 			Fragment++
-		}
+		}*/
 	}
 }
 

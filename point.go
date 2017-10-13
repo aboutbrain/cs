@@ -50,7 +50,7 @@ func (p *Point) DeleteCluster(clusterId int) *Point {
 func (p *Point) setReceptors() {
 	for i := 0; i < p.bitsPerInput; i++ {
 	rnd:
-		bitNumber := Random(0, p.inputVectorSize-1)
+		bitNumber := Random(0, p.inputVectorSize)
 		if a, _ := p.receptorSet.GetBit(uint64(bitNumber)); a != true {
 			p.receptorSet.SetBit(uint64(bitNumber))
 		} else {
@@ -66,7 +66,7 @@ func (p *Point) GetReceptors() bitarray.BitArray {
 func (p *Point) setOutputs() {
 	for i := 0; i < p.bitsPerOutput; i++ {
 	rnd:
-		bitNumber := Random(0, p.outputVectorSize-1)
+		bitNumber := Random(0, p.outputVectorSize)
 		if a, _ := p.outputSet.GetBit(uint64(bitNumber)); a != true {
 			p.outputSet.SetBit(uint64(bitNumber))
 			p.OutputBitArray = append(p.OutputBitArray, bitNumber)

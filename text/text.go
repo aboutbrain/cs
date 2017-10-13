@@ -30,7 +30,7 @@ func GetCharContextMap(bitPerChar int, alpha string, capacity int, contextSize i
 			for j := 0; j < bitPerChar; j++ {
 				if char != 95 {
 				rnd:
-					bitNumber := cs.Random(0, capacity-1)
+					bitNumber := cs.Random(0, capacity)
 					if a, _ := arr.GetBit(uint64(bitNumber)); a != true {
 						arr.SetBit(uint64(bitNumber))
 					} else {

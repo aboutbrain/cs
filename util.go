@@ -28,12 +28,11 @@ func InArray64(num int, arr []uint64) bool {
 	return false
 }
 
-
 func BitArrayToString(ba bitarray.BitArray, vectorLen int) string {
 	nums := ba.ToNums()
 	s := ""
 	for i := 0; i < vectorLen; i++ {
-		if InArray64(i, nums) {
+		if InArray64(vectorLen-1-i, nums) {
 			s += "1"
 		} else {
 			s += "0"

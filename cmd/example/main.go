@@ -77,10 +77,12 @@ func main() {
 		s += word + "_"
 	}
 
+	memOn := false
+
 	textPosition := 0
 	offset := 0
 
-	const Segment = 1000
+	const Segment = 2000
 	const DayTime = 500
 	Fragment := 1
 
@@ -88,8 +90,10 @@ func main() {
 		for j := 0; j < Segment; j++ {
 			context := 1
 
-			if Fragment == 1 {
-				offset = cs.Random(0, 6-Fragment)
+			if Fragment < 2 {
+				offset = cs.Random(0, 10-Fragment)
+			} else {
+				offset = 0
 			}
 
 			txt := strings.ToLower(s[textPosition : textPosition+Fragment])
@@ -120,17 +124,18 @@ func main() {
 				s := "Day"
 				if !nVector {
 					s += " - learning!"
-					//mc.Learn(day)
+					memOn = true
 				}
 				fmt.Println(s)
 			} else {
+				memOn = false
 				s := "Night"
 				if nVector {
 					s += " - learned!"
 				}
 				fmt.Println(s)
 			}
-			mc.Learn(day)
+			mc.Learn(memOn)
 			if t == DayTime {
 				t = 0
 				day = !day
@@ -145,7 +150,7 @@ func main() {
 			t++
 			textPosition++
 		}
-		if day {
+		if !day {
 			Fragment++
 		}
 	}
@@ -172,7 +177,7 @@ func BitArrayToString2(output, learning bitarray.BitArray, vectorLen int) string
 	nums := delta.ToNums()
 	s := ""
 	for i := 0; i < vectorLen; i++ {
-		if cs.InArray64(i, nums) {
+		if cs.InArray64(vectorLen-1-i, nums) {
 			s += "\033[32m1\033[0m"
 		} else {
 			s += "0"

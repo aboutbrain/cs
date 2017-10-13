@@ -14,8 +14,8 @@ type CombinatorialSpace struct {
 	OutHashSet               []HashMap
 	outBitToPointsMap        map[int][]int
 	clustersTotal            int
-	clustersPermanent1       int
-	clustersPermanent2       int
+	//clustersPermanent1       int
+	//clustersPermanent2       int
 }
 
 func NewCombinatorialSpace(size int, inputCodeSize int, receptors, outputs uint64, outCode int) *CombinatorialSpace {
@@ -80,6 +80,6 @@ func (cs *CombinatorialSpace) IncreaseClusters() {
 	cs.clustersTotal++
 }
 
-func (cs *CombinatorialSpace) ClustersCounters() (int, int, int) {
-	return cs.clustersTotal, cs.clustersPermanent1, cs.clustersPermanent2
+func (cs *CombinatorialSpace) ClustersCounters() int /*, int, int*/ {
+	return cs.clustersTotal /*, cs.clustersPermanent1, cs.clustersPermanent2*/
 }

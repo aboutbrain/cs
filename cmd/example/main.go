@@ -19,7 +19,7 @@ const (
 	InputVectorSize            = 128
 	OutputVectorSize           = 128
 	ContextSize                = 10
-	CombinatorialSpaceSize     = 20000
+	CombinatorialSpaceSize     = 60000
 	ReceptorsPerPoint          = 24
 	OutputsPerPoint            = 24
 	ClusterThreshold           = 6
@@ -84,7 +84,7 @@ func main() {
 
 	const Segment = 3000
 	const DayTime = 500
-	Fragment := 9
+	Fragment := 5
 
 	for i := 0; i < 10; i++ {
 		for j := 0; j < Segment; j++ {
@@ -143,10 +143,10 @@ func main() {
 				day = !day
 			}
 
-			total, permanent1, permanent2 := comSpace.ClustersCounters()
+			total /*, permanent1, permanent2*/ := comSpace.ClustersCounters()
 
 			showVectors(sourceCode, outputVector, learningCode, nVector)
-			fmt.Printf("Clusters: %d, Permanent-1: %d, Permanent-2: %d\n\n", total, permanent1, permanent2)
+			fmt.Printf("Clusters: %d\n\n", total /*, permanent1, permanent2*/)
 
 			comSpace.InternalTime++
 			t++

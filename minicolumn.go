@@ -142,7 +142,7 @@ func (mc *MiniColumn) activateClustersInput() {
 		for clusterId := range point.Memory {
 			cluster := &point.Memory[clusterId]
 			cluster.CalculatingInputCoincidence(mc.inputVector)
-			if cluster.inputCoincidence == 1 {
+			if cluster.inputCoincidence == 1 && cluster.q > 0.85 {
 				point.activated++
 			}
 		}

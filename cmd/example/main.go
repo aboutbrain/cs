@@ -24,7 +24,7 @@ const (
 	OutputsPerPoint            = 16
 	ClusterThreshold           = 6
 	ClusterActivationThreshold = 4
-	CharacterBits              = 8
+	CharacterBits              = 5
 	PointMemoryLimit           = 100
 	Level                      = 100
 )
@@ -82,7 +82,7 @@ func main() {
 	textPosition := 0
 	offset := 0
 
-	const Segment = 2000
+	const Segment = 3000
 	const DayTime = 500
 	Fragment := 1
 

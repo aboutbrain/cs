@@ -69,6 +69,8 @@ func main() {
 	mc := cs.NewMiniColumn(ClusterThreshold, ClusterActivationThreshold, PointMemoryLimit, InputVectorSize, OutputVectorSize, Level)
 	mc.SetCombinatorialSpace(comSpace)
 
+	//cs.ToFile("mc.json", mc)
+
 	day := true
 	t := 0
 
@@ -82,7 +84,7 @@ func main() {
 	textPosition := 0
 	offset := 0
 
-	const Segment = 3000
+	const Segment = 100
 	const DayTime = 500
 	Fragment := 5
 
@@ -90,18 +92,15 @@ func main() {
 		for j := 0; j < Segment; j++ {
 			context := 1
 
-			/*if Fragment < 2 {
-				offset = cs.Random(0, 6-Fragment)
-			} else {
-				offset = 0
-			}*/
-
 			txt := strings.ToLower(s[textPosition : textPosition+Fragment])
 
 			textFragment := strings.Repeat("_", offset)
 			textFragment += txt
 			after := strings.Repeat("_", ContextSize-len(textFragment))
 			textFragment += after
+
+			textFragmentNew := cs.RotateL(textFragment, 1)
+			_ = textFragmentNew
 
 			sourceCode := text.GetTextFragmentCode(textFragment, codes)
 			inputBits := mc.SetInputVector(sourceCode)
@@ -152,9 +151,7 @@ func main() {
 			t++
 			textPosition++
 		}
-		/*if !day {
-			Fragment++
-		}*/
+		cs.ToFile("mc.json", mc)
 	}
 }
 

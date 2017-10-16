@@ -13,21 +13,21 @@ var _ = log.Printf // For debugging; delete when done.
 var _ = fmt.Printf // For debugging; delete when done.
 
 type MiniColumn struct {
-	inputVector                bitarray.BitArray
-	inputVectorLen             uint64
-	inputLen                   int
-	outputVector               bitarray.BitArray
-	outputVectorLen            uint64
-	outputLen                  int
+	inputVector                bitarray.BitArray // Input vector of minicolumn
+	inputVectorLen             uint64            // Length of input vector
+	inputLen                   int               // Number of bit in input Vector
+	outputVector               bitarray.BitArray // Output vector
+	outputVectorLen            uint64            // Length of output vector
 	learningVector             bitarray.BitArray
-	cs                         *CombinatorialSpace
-	clusterThreshold           int
-	clusterActivationThreshold int
+	learningLen                int                 // Number of bit in learning Vector
+	cs                         *CombinatorialSpace //
+	clusterThreshold           int                 // cluster threshold in point
+	clusterActivationThreshold int                 // cluster activation threshold
 	epoch                      int
-	memoryLimit                int
-	level                      int
+	memoryLimit                int // Limit of clusters in point
+	level                      int // output bit activation level
 	needActivate               bool
-	InputText                  string
+	InputText                  string // input text fragment for debugging only
 }
 
 func NewMiniColumn(clusterThreshold, clusterActivationThreshold, memoryLimit int, inputVectorLen, outputVectorLen uint64, level int) *MiniColumn {
@@ -54,8 +54,8 @@ func (mc *MiniColumn) SetInputVector(inputVector bitarray.BitArray) int {
 
 func (mc *MiniColumn) SetLearningVector(learningVector bitarray.BitArray) int {
 	mc.learningVector = learningVector
-	mc.outputLen = len(mc.learningVector.ToNums())
-	return mc.outputLen
+	mc.learningLen = len(mc.learningVector.ToNums())
+	return mc.learningLen
 }
 
 func (mc *MiniColumn) Calculate() bitarray.BitArray {
@@ -142,7 +142,7 @@ func (mc *MiniColumn) activateClustersInput() {
 		for clusterId := range point.Memory {
 			cluster := &point.Memory[clusterId]
 			cluster.CalculatingInputCoincidence(mc.inputVector)
-			if cluster.inputCoincidence == 1 && cluster.q > 0.85 {
+			if cluster.inputCoincidence == 1 && cluster.q > 0.8 {
 				point.activated++
 			}
 		}
@@ -164,7 +164,7 @@ func (mc *MiniColumn) activateClustersOutput() {
 }
 
 func (mc *MiniColumn) makeOutVector() {
-	const lowP = float32(0.85)
+	const lowP = float32(0.86)
 	mc.outputVector.Reset()
 	for i, currentOutBitPointsMap := range mc.cs.outBitToPointsMap {
 		potential := float32(0)
@@ -189,7 +189,7 @@ func (mc *MiniColumn) makeOutVector() {
 				fmt.Printf("Точка %d активирована с потенциалом %d\n", pointId, activated)
 			}
 		}
-		if potential >= 3 {
+		if potential >= float32(mc.level) {
 			mc.outputVector.SetBit(uint64(i))
 		}
 	}
@@ -221,10 +221,10 @@ func (mc *MiniColumn) addNewClusters() {
 			memorySize := len(point.Memory)
 
 			inputMin := int(math.Sqrt(float64(3 * mc.inputLen)))
-			outputMin := int(math.Sqrt(float64(3 * mc.outputLen)))
+			outputMin := int(math.Sqrt(float64(3 * mc.learningLen)))
 
 			if receptorsActiveLen >= inputMin && outputsActiveLen >= outputMin && memorySize < mc.memoryLimit {
-				cluster := NewCluster(activeReceptors, outputsActiveCount, mc.inputVectorLen)
+				cluster := NewCluster(activeReceptors, outputsActiveCount, mc.inputVectorLen, mc.outputVectorLen)
 				cluster.startTime = mc.cs.InternalTime
 				hash := cluster.GetHash()
 				if !mc.cs.CheckOutHashSet(pointId, hash) {

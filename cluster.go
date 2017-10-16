@@ -32,26 +32,15 @@ type History struct {
 }
 
 type Cluster struct {
-	Status       int
-	startTime    int
-	inputBitSet  bitarray.BitArray
-	targetBitSet bitarray.BitArray
-	//ActivationState int
-	textFragment string
-	initHash     string
-	//potential                int
-	//ActivationFullCounter    int
-	//ActivationPartialCounter int
-	//ErrorFullCounter         int
-	//ErrorPartialCounter      int
-	nLearn            float64
-	inputCoincidence  float32
-	outputCoincidence float32
-	inputWeights      map[int]float32
-	outputWeights     map[int]float32
-	//HistoryMemory        []History
-	//LearnCounter         int
-	inputLen             uint64
+	Status               int
+	startTime            int
+	inputBitSet          bitarray.BitArray
+	targetBitSet         bitarray.BitArray
+	textFragment         string
+	initHash             string
+	inputCoincidence     float32
+	outputCoincidence    float32
+	inputLen, outputLen  uint64
 	clusterResultLength  float32
 	clusterResultLength1 float32
 	clusterTargetLength  float32
@@ -59,20 +48,24 @@ type Cluster struct {
 	rHigh                float32
 	rLow                 float32
 	q                    float32
-	sX                   float32
-	sY                   float32
-	sXY                  float32
-	realSXY              float32
 	R                    float32
+	// Accumulative
+	nLearn        float64
+	inputWeights  map[int]float32
+	outputWeights map[int]float32
+	sX            float32
+	sY            float32
+	sXY           float32
+	realSXY       float32
 }
 
-func NewCluster(inputBitSet, targetBitSet bitarray.BitArray, inputLen uint64) *Cluster {
+func NewCluster(inputBitSet, targetBitSet bitarray.BitArray, inputLen, outputLen uint64) *Cluster {
 	c := &Cluster{
-		Status: ClusterNormal,
-		//ActivationState: ClusterStateNon,
+		Status:        ClusterNormal,
 		inputWeights:  make(map[int]float32),
 		outputWeights: make(map[int]float32),
 		inputLen:      inputLen,
+		outputLen:     outputLen,
 		nLearn:        1,
 		rHigh:         1,
 		rLow:          0.6,
@@ -97,23 +90,9 @@ func NewCluster(inputBitSet, targetBitSet bitarray.BitArray, inputLen uint64) *C
 	return c
 }
 
-/*func (c *Cluster) GetCurrentPotential(inputVector bitarray.BitArray) (int, InputBits) {
-	inputBits := inputVector.And(c.inputBitSet).ToNums()
-	c.potential = len(inputBits)
-	return c.potential, inputBits
-}*/
-
 func (c *Cluster) SetStatus(status int) {
 	c.Status = status
 }
-
-/*func (c *Cluster) LearnCounterIncrease() {
-	c.LearnCounter++
-}*/
-
-/*func (c *Cluster) SetActivationStatus(status int) {
-	c.ActivationState = status
-}*/
 
 func (c *Cluster) GetInputSize() int {
 	return len(c.inputBitSet.ToNums())
@@ -256,7 +235,7 @@ func (c *Cluster) Learn(inputVector, learningVector bitarray.BitArray) {
 
 	if s1 <= 2 {
 		c.Status = ClusterDeleting
-		fmt.Printf("кластер - удален!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
+		fmt.Printf("кластер - удален по длине!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
 		return
 	}
 
@@ -307,7 +286,7 @@ func (c *Cluster) setNewInputBits() {
 }
 
 func (c *Cluster) setNewOutputBits() {
-	a := bitarray.NewBitArray(c.inputLen)
+	a := bitarray.NewBitArray(c.outputLen)
 	for num := range c.outputWeights {
 		a.SetBit(uint64(num))
 	}

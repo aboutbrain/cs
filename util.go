@@ -40,3 +40,15 @@ func BitArrayToString(ba bitarray.BitArray, vectorLen int) string {
 	}
 	return s
 }
+
+func RotateL(s string, i int) string {
+	a := []byte(s)
+	x, b := (a)[:i], (a)[i:]
+	a = append(b, x...)
+	return string(a)
+}
+
+func RotateR(a *[]byte, i int) {
+	x, b := (*a)[:(len(*a)-i)], (*a)[(len(*a)-i):]
+	*a = append(b, x...)
+}

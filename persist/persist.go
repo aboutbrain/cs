@@ -5,7 +5,8 @@ import (
 	"io/ioutil"
 
 	"github.com/aboutbrain/cs/bitarray"
-	"github.com/aboutbrain/cs/text"
+
+	"github.com/aboutbrain/cs"
 )
 
 type MapOfBits map[int][]uint64
@@ -14,7 +15,7 @@ type CodesDump struct {
 	CharCodes map[int]MapOfBits
 }
 
-func ToFile(path string, n *text.CharContextCodes) {
+func ToFile(path string, n *cs.CharContextCodes) {
 	dump := ToDump(n)
 	DumpToFile(path, dump)
 }
@@ -27,7 +28,7 @@ func DumpToFile(path string, dump *CodesDump) {
 	}
 }
 
-func ToDump(n *text.CharContextCodes) *CodesDump {
+func ToDump(n *cs.CharContextCodes) *CodesDump {
 	dump := &CodesDump{Capacity: uint64(n.VectorCapacity), CharCodes: make(map[int]MapOfBits)}
 	for i, v := range n.CharContext {
 		dump.CharCodes[i] = MapOfBits{}
@@ -52,14 +53,14 @@ func DumpFromFile(path string) *CodesDump {
 	return dump
 }
 
-func FromFile(path string) *text.CharContextCodes {
+func FromFile(path string) *cs.CharContextCodes {
 	dump := DumpFromFile(path)
 	n := FromDump(dump)
 	return n
 }
 
-func FromDump(dump *CodesDump) *text.CharContextCodes {
-	codes := make(text.CharContext)
+func FromDump(dump *CodesDump) *cs.CharContextCodes {
+	codes := make(cs.CharContext)
 	for i, v := range dump.CharCodes {
 		arr := make(map[int]bitarray.BitArray)
 		for j, v1 := range v {
@@ -71,6 +72,6 @@ func FromDump(dump *CodesDump) *text.CharContextCodes {
 		}
 		codes[i] = arr
 	}
-	charContextCode := text.CharContextCodes{VectorCapacity: int(dump.Capacity), CharContext: codes}
+	charContextCode := cs.CharContextCodes{VectorCapacity: int(dump.Capacity), CharContext: codes}
 	return &charContextCode
 }

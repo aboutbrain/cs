@@ -38,6 +38,9 @@ type Cluster struct {
 	targetBitSet         bitarray.BitArray
 	textFragment         string
 	initHash             string
+	currentHash          string
+	goodCounter          int
+	badCounter           int
 	inputCoincidence     float32
 	outputCoincidence    float32
 	inputLen, outputLen  uint64

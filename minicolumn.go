@@ -4,13 +4,18 @@ import (
 	"fmt"
 	"log"
 
-	"math"
-
 	"github.com/aboutbrain/cs/bitarray"
 )
 
 var _ = log.Printf // For debugging; delete when done.
 var _ = fmt.Printf // For debugging; delete when done.
+
+type votingCounters struct {
+	Up           int
+	Down         int
+	Potential    float32
+	PointCluster map[int]map[int]*Cluster
+}
 
 type MiniColumn struct {
 	inputVector                bitarray.BitArray // Input vector of minicolumn
@@ -28,6 +33,7 @@ type MiniColumn struct {
 	level                      int // output bit activation level
 	needActivate               bool
 	InputText                  string // input text fragment for debugging only
+	votingArray                map[int]votingCounters
 }
 
 func NewMiniColumn(clusterThreshold, clusterActivationThreshold, memoryLimit int, inputVectorLen, outputVectorLen uint64, level int) *MiniColumn {
@@ -39,6 +45,7 @@ func NewMiniColumn(clusterThreshold, clusterActivationThreshold, memoryLimit int
 		inputVectorLen:             inputVectorLen,
 		outputVectorLen:            outputVectorLen,
 		outputVector:               bitarray.NewBitArray(outputVectorLen),
+		//votingArray:                make(map[int]map[int]bool),
 	}
 }
 
@@ -56,6 +63,10 @@ func (mc *MiniColumn) SetLearningVector(learningVector bitarray.BitArray) int {
 	mc.learningVector = learningVector
 	mc.learningLen = len(mc.learningVector.ToNums())
 	return mc.learningLen
+}
+
+func (mc *MiniColumn) GetLearningVector() bitarray.BitArray {
+	return mc.learningVector
 }
 
 func (mc *MiniColumn) Calculate() bitarray.BitArray {
@@ -94,6 +105,7 @@ func (mc *MiniColumn) modifyClusters() {
 				if !mc.cs.CheckOutHashSet(pointId, newHash) {
 					mc.cs.RemoveHash(pointId, oldHash)
 					mc.cs.SetHash(pointId, newHash)
+					cluster.currentHash = newHash
 				} else {
 					mc.cs.DeleteCluster(point, j, false)
 					mc.cs.RemoveHash(pointId, oldHash)
@@ -134,8 +146,6 @@ func (mc *MiniColumn) consolidateMemory() {
 
 func (mc *MiniColumn) activateClustersInput() {
 	stat := make(map[int]int)
-	//clustersFullyActivated := 0
-	//clustersPartialActivated := 0
 	for pointId := range mc.cs.Points {
 		point := &mc.cs.Points[pointId]
 		point.activated = 0
@@ -163,36 +173,60 @@ func (mc *MiniColumn) activateClustersOutput() {
 	}
 }
 
-func (mc *MiniColumn) makeOutVector() {
+func (mc *MiniColumn) makeOutVector() int {
+	mc.votingArray = make(map[int]votingCounters)
 	const lowP = float32(0.86)
-	mc.outputVector.Reset()
+	clusters := 0
+	mc.outputVector = bitarray.NewBitArray(mc.outputVectorLen)
 	for i, currentOutBitPointsMap := range mc.cs.outBitToPointsMap {
 		potential := float32(0)
+		potMap := votingCounters{PointCluster: make(map[int]map[int]*Cluster)}
 		for _, pointId := range currentOutBitPointsMap {
 			point := &mc.cs.Points[pointId]
 			activated := 0
-			for _, cluster := range point.Memory {
-				if cluster.q > lowP {
+			clMap := make(map[int]*Cluster)
+			for clusterId, cluster := range point.Memory {
+				if cluster.q > lowP || cluster.goodCounter < 10 {
 					if cluster.inputCoincidence == 1 {
 						if result, _ := cluster.targetBitSet.GetBit(uint64(i)); result {
-							potential += cluster.inputCoincidence
+							potential += cluster.outputWeights[i]
+							clMap[clusterId] = &point.Memory[clusterId]
+							potMap.Up++
+							potMap.Potential += cluster.outputWeights[i]
 							activated++
+							clusters++
 						} else {
-							if cluster.outputWeights[i] > 0 {
-								potential -= cluster.outputWeights[i]
+							if cluster.outputWeights[i] == 0 {
+								potMap.Potential -= 1
+								potential -= 1
+								clMap[clusterId] = &point.Memory[clusterId]
+								potMap.Down++
 							}
 						}
 					}
 				}
 			}
-			if activated > 1 {
-				fmt.Printf("Точка %d активирована с потенциалом %d\n", pointId, activated)
+			if activated > 0 {
+				potMap.PointCluster[pointId] = clMap
+				if activated > 1 {
+					fmt.Printf("Точка %d активирована с потенциалом %d\n", pointId, activated)
+				}
 			}
 		}
 		if potential >= float32(mc.level) {
+			mc.votingArray[i] = potMap
 			mc.outputVector.SetBit(uint64(i))
 		}
 	}
+	nums := mc.outputVector.ToNums()
+	if len(nums) > 8 {
+		for _, v := range mc.votingArray {
+			fmt.Printf("Potential: %f, Up: %d, Down: %d, Result: %d\n", v.Potential, v.Up, v.Down, v.Up-v.Down)
+		}
+		min, max := MinMax(mc.votingArray)
+		fmt.Printf("Min: %d, max: %d\n", min, max)
+	}
+	return clusters
 }
 
 func (mc *MiniColumn) OutVector() bitarray.BitArray {
@@ -203,6 +237,8 @@ func (mc *MiniColumn) addNewClusters() {
 	clusters := 0
 	exist := 0
 	activated := 0
+	inputMax := 0
+	outputMax := 0
 	for pointId, point := range mc.cs.Points {
 		if mc.inputLen > 0 {
 			if point.activated > 0 {
@@ -220,8 +256,17 @@ func (mc *MiniColumn) addNewClusters() {
 			outputsActiveLen := len(outputsActiveCount.ToNums())
 			memorySize := len(point.Memory)
 
-			inputMin := int(math.Sqrt(float64(3 * mc.inputLen)))
-			outputMin := int(math.Sqrt(float64(3 * mc.learningLen)))
+			//inputMin := int(math.Sqrt(float64(3 * mc.inputLen)))
+			//outputMin := int(math.Sqrt(float64(3 * mc.learningLen)))
+			if receptorsActiveLen > inputMax {
+				inputMax = receptorsActiveLen
+			}
+			if outputsActiveLen > outputMax {
+				outputMax = outputsActiveLen
+			}
+
+			inputMin := 4
+			outputMin := 4
 
 			if receptorsActiveLen >= inputMin && outputsActiveLen >= outputMin && memorySize < mc.memoryLimit {
 				cluster := NewCluster(activeReceptors, outputsActiveCount, mc.inputVectorLen, mc.outputVectorLen)
@@ -243,4 +288,5 @@ func (mc *MiniColumn) addNewClusters() {
 	}
 	mc.epoch++
 	fmt.Printf("Создано %d новых класеров, пропущено %d, активированных точек %d\n", clusters, exist, activated)
+	fmt.Printf("Максимальная активность входа %d, выхода %d\n\n", inputMax, outputMax)
 }

@@ -37,7 +37,7 @@ func NewCombinatorialSpace(size int, inputCodeSize int, receptors, outputs uint6
 
 func (cs *CombinatorialSpace) createPoints() {
 	for i := 0; i < cs.NumberOfPoints; i++ {
-		point := NewPoint(i, cs.NumberOfBitInOutCode, cs.NumberOfBitInOutCode, cs.NumberOfReceptorsInPoint, cs.NumberOfOutputsInPoint)
+		point := NewPoint(i, cs.NumberOfBitInInputCode, cs.NumberOfBitInOutCode, cs.NumberOfReceptorsInPoint, cs.NumberOfOutputsInPoint)
 		cs.Points = append(cs.Points, *point)
 		outBits := point.GetOutputs()
 		for _, v := range outBits.ToNums() {

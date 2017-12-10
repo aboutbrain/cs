@@ -9,23 +9,22 @@ import (
 	"github.com/aboutbrain/cs"
 	"github.com/aboutbrain/cs/bitarray"
 	"github.com/aboutbrain/cs/persist"
-	"github.com/aboutbrain/cs/text"
 )
 
 var _ = fmt.Printf // For debugging; delete when done.
 
 const (
 	InputVectorSize            = 128
-	OutputVectorSize           = 128
-	ContextSize                = 10
+	OutputVectorSize           = 32
+	ContextSize                = 5
 	CombinatorialSpaceSize     = 60000
 	ReceptorsPerPoint          = 24
-	OutputsPerPoint            = 24
+	OutputsPerPoint            = 8
 	ClusterThreshold           = 6
 	ClusterActivationThreshold = 4
 	CharacterBits              = 5
 	PointMemoryLimit           = 100
-	Level                      = 100
+	Level                      = 10 //5
 )
 
 func main() {
@@ -58,7 +57,7 @@ func main() {
 	}
 	fmt.Printf("WordsCount: %d\n", len(wordCodeMap))
 
-	charContextVectors := text.GetCharContextMap(CharacterBits, text.Alpha, InputVectorSize, ContextSize)
+	charContextVectors := cs.GetCharContextMap(CharacterBits, cs.Alpha, InputVectorSize, ContextSize)
 
 	path := "codes.json"
 	persist.ToFile(path, charContextVectors)
@@ -68,6 +67,50 @@ func main() {
 	mc := cs.NewMiniColumn(ClusterThreshold, ClusterActivationThreshold, PointMemoryLimit, InputVectorSize, OutputVectorSize, Level)
 	mc.SetCombinatorialSpace(comSpace)
 
+	s := ""
+	for _, word := range words {
+		s += word + "_"
+	}
+
+	//textPosition := 0
+	offset := 0
+	//Fragment := 14
+
+	cortex := cs.NewCortex(mc, 5, codes)
+
+	for wordId, word := range words {
+		//c := 0
+		if len(word) > 1 {
+			word = word[0:1]
+		}
+		//word = "abcfd"
+		txt := strings.ToLower(word)
+		textFragment := strings.Repeat("_", offset)
+		textFragment += txt
+
+		i2 := ContextSize - len(textFragment)
+		if i2 > 0 {
+			after := strings.Repeat("_", i2)
+			textFragment += after
+		}
+
+		//textFragment = cs.RotateL(textFragment, cs.Random(0, 5))
+
+		contextData := make([]cs.CortexContext, ContextSize)
+
+		for i := 0; i < ContextSize; i++ {
+			textFragmentContext := cs.RotateL(textFragment, i)
+			sourceCode := cs.GetTextFragmentCode(textFragmentContext, codes)
+			contextData[i] = cs.CortexContext{
+				TextFragment: textFragmentContext,
+				InputVector:  sourceCode,
+				Id:           wordId,
+			}
+		}
+
+		cortex.Run(&contextData)
+
+	}
 }
 
 func getRandomCode(bitPerWord, capacity int) bitarray.BitArray {
